@@ -1,13 +1,14 @@
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel
 
+if TYPE_CHECKING:
+    from app.schemes.users import SUserGet
 
-class SRolesAdd(BaseModel):
+
+class SRoleAdd(BaseModel):
     name: str
 
 
-class SRoleGet(SRolesAdd):
+class SRoleGet(SRoleAdd):
     id: int
-
-
-class SRoleGetWithRels(SRoleGet):
-    users: list["SUserGet"]
