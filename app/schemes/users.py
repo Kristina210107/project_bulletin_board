@@ -1,36 +1,30 @@
-from typing import TYPE_CHECKING
-
+from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
-if TYPE_CHECKING:
-    from app.schemes.roles import SRoleGet
 
-
-class SUserAddRequest(BaseModel):
-    name: str
+class UserBase(BaseModel):
     email: EmailStr
-    password: str
-    role_id: int
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    is_verified: bool = False
+    image_id: Optional[int] = None
 
 
-class SUserAdd(BaseModel):
-    name: str
-    email: EmailStr
-    hashed_password: str
-    role_id: int
+class UserCreate(UserBase):
+    pass
 
 
-class SUserAuth(BaseModel):
-    email: EmailStr
-    password: str
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    is_verified: Optional[bool] = None
+    image_id: Optional[int] = None
 
 
-class SUserGet(SUserAdd):
+class User(UserBase):
     id: int
+    created_at: datetime
 
-
-class SUserPatch(BaseModel):
-    name: str | None = None
-    email: EmailStr | None = None
-    hashed_password: str | None = None
-    role_id: int | None = None
+    class Config:
+        from_attributes = True

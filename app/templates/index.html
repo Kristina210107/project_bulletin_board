@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}ТовароОбмен — Сообщество обмена вещами{% endblock %}
+
+{% block content %}
+<div id="app" class="app">
+  <!-- Верхняя панель с логотипом и кнопками -->
+  <header class="top-bar">
+    <div class="logo-section">
+      <svg class="logo" width="48" height="48" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="36" cy="36" r="34" fill="#F5A089" stroke="#795F58" stroke-width="2" />
+        <g fill="none" stroke="#331B15" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
+          <path d="M22 24h28" />
+          <path d="M36 24v26" />
+        </g>
+      </svg>
+      <div class="logo-text">
+        <h1>ТовароОбмен</h1>
+        <p class="tagline">Взаимная помощь. Реальные вещи.<br>Достойные истории.</p>
+      </div>
+    </div>
+    
+    <div class="top-actions">
+      <button class="btn-offer">Предложить вещь</button>
+      <a href="/messages" class="btn-messages">Сообщения</a>
+      <button class="btn-auth">Войти</button>
+      <button class="btn-auth primary">Регистрация</button>
+      <div class="user-profile">
+        <div class="avatar">А</div>
+        <div class="user-info">
+          <div class="user-name">Анна</div>
+          <div class="user-trust">Доверие 4.8</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Поисковая строка -->
+  <div class="search-bar">
+    <input type="text" class="global-search" placeholder="Помех по всему сайту..." />
+  </div>
+
+  <main class="main-container">
+    <!-- Левая колонка: Комьюнити и фильтры -->
+    <aside class="left-sidebar">
+      <!-- Блок комьюнити -->
+      <section class="community-block">
+        <h3>Комьюнити</h3>
+        <div class="community-stats">
+          <span class="stat">2500 участников</span>
+          <span class="stat">•</span>
+          <span class="stat">132 обмена на этой неделе</span>
+        </div>
+        <div class="community-actions">
+          <button class="btn-join">Присоединиться</button>
+          <button class="btn-how">Как это работает</button>
+        </div>
+      </section>
+
+      <!-- Фильтры -->
+      <section class="filters-block">
+        <h4>Фильтры</h4>
+        <input type="text" class="filter-search" placeholder="Помех: что нужно..." />
+        
+        <div class="filter-categories">
+          <h5>Все категории</h5>
+          <div class="category-list">
+            <label class="category-item">
+              <input type="checkbox" />
+              <span>Книги</span>
+            </label>
+            <label class="category-item">
+              <input type="checkbox" />
+              <span>Одежда</span>
+            </label>
+            <label class="category-item">
+              <input type="checkbox" />
+              <span>Техника</span>
+            </label>
+            <label class="category-item">
+              <input type="checkbox" />
+              <span>Детское</span>
+            </label>
+            <label class="category-item">
+              <input type="checkbox" />
+              <span>Мебель</span>
+            </label>
+            <label class="category-item">
+              <input type="checkbox" />
+              <span>Дом</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="filter-nearby">
+          <label>
+            <input type="checkbox" id="nearby" />
+            <span>Только поблизости</span>
+          </label>
+        </div>
+        
+        <div class="filter-tip">
+          <h5>Совет</h5>
+          <p>Опишите, почему вещь будет полезна другому — это повышает шанс на обмен.</p>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Центральная колонка: Предложения -->
+    <section class="content-main">
+      <div class="content-header">
+        <h2>Предложения сообщества</h2>
+        <div class="sort-options">
+          <select class="sort-select">
+            <option value="new">Сначала новые</option>
+            <option value="popular">Популярные</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="offers-grid" id="offers-list">
+        <!-- Карточка предложения 1 -->
+        <div class="offer-card">
+          <div class="offer-image">
+            <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=400&auto=format&fit=crop" alt="Сборник сказок" />
+          </div>
+          <div class="offer-content">
+            <h3 class="offer-title">Сборник советских сказок (книги)</h3>
+            <p class="offer-description">В отличном состоянии, 200 страниц. Ищу детскую одежду или игрушку.</p>
+            
+            <div class="offer-specs">
+              <span class="spec">200 стр.</span>
+              <span class="spec">Твёрдый переплёт</span>
+              <span class="spec">Вес 420 г</span>
+            </div>
+            
+            <div class="offer-meta">
+              <span class="category-tag">Книги</span>
+              <span class="location">Москва, м. Чистые пруды</span>
+            </div>
+            
+            <div class="offer-actions">
+              <button class="btn-exchange">Предложить обмен</button>
+              <button class="btn-save">Сохранить</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Карточка предложения 2 -->
+        <div class="offer-card">
+          <div class="offer-image">
+            <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=400&auto=format&fit=crop" alt="Детская куртка" />
+          </div>
+          <div class="offer-content">
+            <h3 class="offer-title">Детская теплая куртка (110 см)</h3>
+            <p class="offer-description">Пару раз носили, тёплая и чистая. Отдам в обмен на настольные игры.</p>
+            
+            <div class="offer-specs">
+              <span class="spec">Размер 110</span>
+              <span class="spec">Синтепон</span>
+              <span class="spec">Практически новая</span>
+            </div>
+            
+            <div class="offer-meta">
+              <span class="category-tag">Одежда</span>
+              <span class="location">Санкт-Петербург, Приморский р-н</span>
+            </div>
+            
+            <div class="offer-actions">
+              <button class="btn-exchange">Предложить обмен</button>
+              <button class="btn-save">Сохранить</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Карточка предложения 3 -->
+        <div class="offer-card">
+          <div class="offer-image">
+            <img src="https://images.unsplash.com/photo-1526481280698-49b77a2b52e7?q=80&w=400&auto=format&fit=crop" alt="Светильник" />
+          </div>
+          <div class="offer-content">
+            <h3 class="offer-title">Светильник настольный — рабочий</h3>
+            <p class="offer-description">Ищем азы для ремонта: отвертки/клещи или помощь с мелким ремонтом.</p>
+            
+            <div class="offer-specs">
+              <span class="spec">LED</span>
+              <span class="spec">Регулировка яркости</span>
+              <span class="spec">Потребление 6W</span>
+            </div>
+            
+            <div class="offer-meta">
+              <span class="category-tag">Техника</span>
+              <span class="owner">Екатерина</span>
+              <span class="location">Казань, центр</span>
+            </div>
+            
+            <div class="offer-actions">
+              <button class="btn-exchange">Предложить обмен</button>
+              <button class="btn-save">Сохранить</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Еще карточки -->
+        <div class="offer-card">
+          <div class="offer-image">
+            <img src="https://images.unsplash.com/photo-1503602642458-232111445657?q=80&w=400&auto=format&fit=crop" alt="Кружки" />
+          </div>
+          <div class="offer-content">
+            <h3 class="offer-title">Набор керамических кружек</h3>
+            <p class="offer-description">6 штук, есть небольшой скол на одной.</p>
+            <div class="offer-meta">
+              <span class="category-tag">Дом</span>
+            </div>
+            <div class="offer-actions">
+              <button class="btn-exchange">Предложить обмен</button>
+              <button class="btn-save">Сохранить</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="offer-card">
+          <div class="offer-image">
+            <img src="https://images.unsplash.com/photo-1520975916232-04dfb3f2f6d9?q=80&w=400&auto=format&fit=crop" alt="Рюкзак" />
+          </div>
+          <div class="offer-content">
+            <h3 class="offer-title">Рюкзак городской, почти новый</h3>
+            <p class="offer-description">Удобные отделения, идеален для учебы или прогулок.</p>
+            <div class="offer-meta">
+              <span class="category-tag">Одежда</span>
+            </div>
+            <div class="offer-actions">
+              <button class="btn-exchange">Предложить обмен</button>
+              <button class="btn-save">Сохранить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Правая колонка: Запросы и истории -->
+    <aside class="right-sidebar">
+      <!-- Запросы -->
+      <section class="requests-block">
+        <h3>Предложенные запросы</h3>
+        <div class="requests-list">
+          <div class="request-item">
+            <strong>Нужна помощь с ремонтом велосипеда</strong>
+            <p><small>Сергей • Взамен: инструменты</small></p>
+          </div>
+          <div class="request-item">
+            <strong>Ищу детские книги 6+</strong>
+            <p><small>Мария • Взамен: комнатные растения</small></p>
+          </div>
+          <div class="request-item">
+            <strong>Требуется временная мебель</strong>
+            <p><small>Алексей • Взамен: электроника</small></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Истории обмена -->
+      <section class="stories-block">
+        <h4>Истории обмена</h4>
+        <div class="stories-list">
+          <div class="story-item">
+            <p>"Обменял старый фотоаппарат на набор инструментов. Обе стороны довольны!"</p>
+          </div>
+          <div class="story-item">
+            <p>"Отдал детскую одежду, получил книги. Отличная экономия для семьи!"</p>
+          </div>
+          <div class="story-item">
+            <p>"Поменяла ненужную вазу на горшок с цветком. Теперь дома уютнее."</p>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="main-footer">
+    <p>Здесь люди помогают друг другу находить вещи через обмен — без давления и коммерции.</p>
+    <div class="footer-contact">
+      <div>✉️ hello@obmennik.local</div>
+      <div>📞 +7 (916) 123-45-67</div>
+    </div>
+  </footer>
+</div>
+{% endblock %}

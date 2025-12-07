@@ -1,0 +1,26 @@
+{
+  "offers": [
+    {
+      "id": 1,
+      "title": "Сборник советских сказок (книги)",
+      "description": "В отличном состоянии, 200 страниц. Ищу детскую одежду или игрушку.",
+      "category": "Книги",
+      "location": "Москва, м. Чистые пруды",
+      "image": "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=400&auto=format&fit=crop",
+      "specs": ["200 стр.", "Твёрдый переплёт", "Вес 420 г"],
+      "owner": "Ольга",
+      "likes": 18,
+      "created_at": "2024-01-15T10:30:00"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Анна",
+      "email": "anna@example.com",
+      "trust_score": 4.8,
+      "created_at": "2024-01-01T12:00:00"
+    }
+  ],
+  "saved_items": []
+}
