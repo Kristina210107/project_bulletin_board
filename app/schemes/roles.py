@@ -1,14 +1,18 @@
-from typing import TYPE_CHECKING
-
+# app/schemes/roles.py
 from pydantic import BaseModel
-
-if TYPE_CHECKING:
-    from app.schemes.users import SUserGet
+from typing import Optional
 
 
+class SRoleGet(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# Для API
 class SRoleAdd(BaseModel):
     name: str
-
-
-class SRoleGet(SRoleAdd):
-    id: int
+    description: Optional[str] = None

@@ -5,7 +5,7 @@ from app.schemes.relations_users_roles import SRoleGetWithRels
 from app.services.base import BaseService
 
 
-class RoleService(BaseService):
+class RolesService(BaseService):
 
     async def create_role(self, role_data: SRoleAdd):
         try:
@@ -14,7 +14,7 @@ class RoleService(BaseService):
             raise RoleAlreadyExistsError
         await self.db.commit()
 
-    async def get_role(self, role_id: int):
+    async def get_role_by_id(self, role_id: int):
         role: SRoleGetWithRels | None = await self.db.roles.get_one_or_none_with_users(
             id=role_id
         )

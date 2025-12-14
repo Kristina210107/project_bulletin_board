@@ -1,10 +1,27 @@
-from app.schemes.users import SUserGet
-from app.schemes.roles import SRoleGet
+# app/schemes/relations_users_roles.py
+from pydantic import BaseModel
+from typing import Optional, List
 
 
-class SRoleGetWithRels(SRoleGet):
-    users: list[SUserGet] | None = None
+# Простые схемы для отношений
+class SRoleSimple(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
 
 
-class SUserGetWithRels(SUserGet):
-    role: SRoleGet
+class SUserSimple(BaseModel):
+    id: int
+    name: str = ""
+    email: str
+
+
+# Основные схемы с отношениями
+class SRoleGetWithRels(SRoleSimple):
+    users: List[SUserSimple] = []
+
+
+class SUserGetWithRels(SUserSimple):
+    role: Optional[SRoleSimple] = None
+    trust_score: float = 5.0
+    created_at: Optional[str] = None

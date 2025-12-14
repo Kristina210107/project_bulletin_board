@@ -1,19 +1,79 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+from app.exceptions.categories import (
+    CategoryNotFoundError,
+    CategoryNotFoundHTTPError,
+    CategoryAlreadyExistsError,
+    CategoryAlreadyExistsHTTPError
+)
+from app.schemes.categories import (
+    SCategoryAdd,
+    SCategoryGet,
+    SCategoryUpdate,
+    SCategoryPatch
+)
+from app.services.categories import CategoryService
 
-@router.get("/")
-async def get_categories():
-    """Получить все категории"""
-    return [
-        {"id": 1, "name": "Книги", "count": 45},
-        {"id": 2, "name": "Одежда", "count": 32},
-        {"id": 3, "name": "Техника", "count": 28},
-        {"id": 4, "name": "Детское", "count": 56},
-        {"id": 5, "name": "Мебель", "count": 18},
-        {"id": 6, "name": "Дом", "count": 39},
-        {"id": 7, "name": "Развлечения", "count": 22},
-        {"id": 8, "name": "Инструменты", "count": 15},
-        {"id": 9, "name": "Коллекции", "count": 8},
-        {"id": 10, "name": "Интерьер", "count": 27}
-    ]
+router = APIRouter(prefix="/categories", tags=["Категории"])
+
+
+@router.post("", summary="Создание новой категории")
+async def create_new_category(
+    category_data: SCategoryAdd,
+) -> dict[str, str]:
+    try:
+        await CategoryService().create_category(category_data)
+    except CategoryAlreadyExistsError:
+        raise CategoryAlreadyExistsHTTPError
+    return {"status": "OK"}
+
+
+@router.get("", summary="Получение списка всех категорий")
+async def get_all_categories(
+) -> list[SCategoryGet]:
+    return await CategoryService().get_categories()
+
+
+@router.get("/{id}", summary="Получение конкретной категории")
+async def get_category(
+    id: int,
+) -> SCategoryGet:
+    return await CategoryService().get_category(category_id=id)
+
+
+@router.put("/{id}", summary="Изменение конкретной категории")
+async def update_category(
+    category_data: SCategoryUpdate,
+    id: int,
+) -> dict[str, str]:
+    try:
+        await CategoryService().edit_category(category_id=id, category_data=category_data)
+    except CategoryNotFoundError:
+        raise CategoryNotFoundHTTPError
+
+    return {"status": "OK"}
+
+
+@router.patch("/{id}", summary="Частичное изменение конкретной категории")
+async def patch_category(
+    category_data: SCategoryPatch,
+    id: int,
+) -> dict[str, str]:
+    try:
+        await CategoryService().patch_category(category_id=id, category_data=category_data)
+    except CategoryNotFoundError:
+        raise CategoryNotFoundHTTPError
+
+    return {"status": "OK"}
+
+
+@router.delete("/{id}", summary="Удаление конкретной категории")
+async def delete_category(
+    id: int,
+) -> dict[str, str]:
+    try:
+        await CategoryService().delete_category(category_id=id)
+    except CategoryNotFoundError:
+        raise CategoryNotFoundHTTPError
+
+    return {"status": "OK"}

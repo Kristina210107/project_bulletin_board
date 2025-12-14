@@ -1,56 +1,101 @@
-from fastapi import APIRouter, HTTPException
-from typing import List
-import json
-import os
+from fastapi import APIRouter, Depends
 
-router = APIRouter()
+from app.api.dependencies import DBDep, UserIdDep, IsAdminDep
+from app.exceptions.users import (
+    UserAlreadyExistsError,
+    UserAlreadyExistsHTTPError,
+    UserNotFoundError,
+    UserNotFoundHTTPError,
+)
+from app.schemes.users import SUserAdd, SUserAddRequest, SUserGet
+from app.schemes.relations_users_roles import SUserGetWithRels
+from app.services.users import UserService
+from typing import Optional
+from pydantic import BaseModel
 
-DATA_FILE = "app/data/users.json"
+router = APIRouter(prefix="/admin", tags=["Управление пользователями"])
 
-def load_users():
-    """Загружаем пользователей"""
+
+@router.post("/users", summary="Создание нового пользователя")
+async def create_new_user(
+    user_data: SUserAddRequest,
+    db: DBDep,
+) -> dict[str, str]:
     try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return [
-            {
-                "id": 1,
-                "name": "Анна",
-                "email": "anna@example.com",
-                "trust_score": 4.8,
-                "created_at": "2024-01-01T12:00:00"
-            }
-        ]
+        await UserService(db).create_user(user_data)
+    except UserAlreadyExistsError:
+        raise UserAlreadyExistsHTTPError
+    return {"status": "OK"}
 
-@router.get("/", response_model=List[dict])
-async def get_users():
-    """Получить всех пользователей"""
-    return load_users()
 
-@router.get("/{user_id}", response_model=dict)
-async def get_user(user_id: int):
-    """Получить пользователя по ID"""
-    users = load_users()
-    user = next((user for user in users if user.get("id") == user_id), None)
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
-    
-    return user
+@router.get("/users", summary="Получение списка пользователей")
+async def get_all_users(
+    db: DBDep,
+) -> list[SUserGet]:
+    return await UserService(db).get_users()
 
-@router.get("/{user_id}/offers", response_model=List[dict])
-async def get_user_offers(user_id: int):
-    """Получить предложения пользователя"""
-    from .items import load_items
+
+@router.get("/users/{id}", summary="Получение конкретного пользователя")
+async def get_user_by_id(
+    db: DBDep,
+    id: int,
+    current_user_id: int = Depends(UserIdDep)
+) -> SUserGetWithRels:
+    # Проверяем, что пользователь запрашивает свои данные или является администратором
+    if id != current_user_id:
+        # Если пользователь не является администратором, выбрасываем ошибку
+        await IsAdminDep()
     
-    users = load_users()
-    user = next((user for user in users if user.get("id") == user_id), None)
+    return await UserService(db).get_user(user_id=id)
+
+
+@router.put("/users/{id}", summary="Изменение конкретного пользователя")
+async def update_user(
+    db: DBDep,
+    user_data: SUserAdd,
+    id: int,
+    current_user_id: int = Depends(UserIdDep)
+) -> dict[str, str]:
+    # Проверяем, что пользователь обновляет свои данные или является администратором
+    if id != current_user_id:
+        # Если пользователь не является администратором, выбрасываем ошибку
+        await IsAdminDep()
     
-    if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    try:
+        await UserService(db).edit_user(user_id=id, user_data=user_data)
+    except UserNotFoundError:
+        raise UserNotFoundHTTPError
+
+    return {"status": "OK"}
+
+
+@router.delete("/users/{id}", summary="Удаление конкретного пользователя")
+async def delete_user(
+    db: DBDep,
+    id: int,
+    current_user_id: int = Depends(UserIdDep)
+) -> dict[str, str]:
+    # Проверяем, что пользователь удаляет свои данные или является администратором
+    if id != current_user_id:
+        # Если пользователь не является администратором, выбрасываем ошибку
+        await IsAdminDep()
     
-    items = load_items()
-    user_items = [item for item in items if item.get("owner") == user.get("name")]
-    
-    return user_items
+    try:
+        await UserService(db).delete_user(user_id=id)
+    except UserNotFoundError:
+        raise UserNotFoundHTTPError
+
+    return {"status": "OK"}
+
+class SUserGet(BaseModel):
+    """Схема для репозиториев"""
+    id: int
+    email: str
+    name: str
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    is_verified: bool = False
+    image_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True

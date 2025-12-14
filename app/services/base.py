@@ -1,6 +1,5 @@
 from app.database.db_manager import DBManager
 
-
 class BaseService:
     db: DBManager | None
 

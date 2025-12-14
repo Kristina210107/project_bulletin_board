@@ -12,6 +12,11 @@ from app.config import settings
 # TODO Добавить сюда импорт созданных моделей
 # Пример:
 from app.models.users import UserModel
+from app.models.items import ItemModel
+from app.models.categories import CategoryModel
+from app.models.locations import LocationModel
+from app.models.messages import MessageModel
+from app.models.reviews import ReviewModel
 from app.models.roles import RoleModel
 
 # this is the Alembic Config object, which provides

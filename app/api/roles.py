@@ -9,9 +9,9 @@ from app.exceptions.roles import (
 )
 from app.schemes.roles import SRoleAdd, SRoleGet
 from app.schemes.relations_users_roles import SRoleGetWithRels
-from app.services.roles import RoleService
+from app.services.roles import RolesService
 
-router = APIRouter(prefix="/auth", tags=["Управление ролями"])
+router = APIRouter(prefix="/admin", tags=["Управление ролями"])
 
 
 @router.post("/roles", summary="Создание новой роли")
@@ -20,7 +20,7 @@ async def create_new_role(
     db: DBDep,
 ) -> dict[str, str]:
     try:
-        await RoleService(db).create_role(role_data)
+        await RolesService(db).create_role(role_data)
     except RoleAlreadyExistsError:
         raise RoleAlreadyExistsHTTPError
     return {"status": "OK"}
@@ -30,7 +30,7 @@ async def create_new_role(
 async def get_all_roles(
     db: DBDep,
 ) -> list[SRoleGet]:
-    return await RoleService(db).get_roles()
+    return await RolesService(db).get_roles()
 
 
 @router.get("/roles/{id}", summary="Получение конкретной роли")
@@ -38,7 +38,7 @@ async def get_role(
     db: DBDep,
     id: int,
 ) -> SRoleGetWithRels:
-    return await RoleService(db).get_role(role_id=id)
+    return await RolesService(db).get_role(role_id=id)
 
 
 @router.put("/roles/{id}", summary="Изменение конкретной роли")
@@ -48,7 +48,7 @@ async def get_role(
     id: int,
 ) -> dict[str, str]:
     try:
-        await RoleService(db).edit_role(role_id=id, role_data=role_data)
+        await RolesService(db).edit_role(role_id=id, role_data=role_data)
     except RoleNotFoundError:
         raise RoleNotFoundHTTPError
 
@@ -61,8 +61,9 @@ async def delete_role(
     id: int,
 ) -> dict[str, str]:
     try:
-        await RoleService(db).delete_role(role_id=id)
+        await RolesService(db).delete_role(role_id=id)
     except RoleNotFoundError:
         raise RoleNotFoundHTTPError
 
     return {"status": "OK"}
+

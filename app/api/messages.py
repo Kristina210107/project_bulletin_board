@@ -1,47 +1,68 @@
-from fastapi import APIRouter, HTTPException
-from typing import List
+from fastapi import APIRouter
 
-router = APIRouter()
+from app.exceptions.messages import (
+    MessageNotFoundError,
+    MessageNotFoundHTTPError,
+    ConversationNotFoundError,
+    ConversationNotFoundHTTPError,
+    MessageAccessDeniedError,
+    MessageAccessDeniedHTTPError
+)
+from app.schemes.messages import (
+    SMessageAdd,
+    SMessageGet,
+    SConversationGet,
+    SConversationList
+)
+from app.services.messages import MessageService
 
-@router.get("/")
-async def get_conversations():
-    """Получить все чаты"""
-    return [
-        {
-            "id": 1,
-            "partner": "Ольга",
-            "last_message": "Привет! Интересуюсь вашим предложением...",
-            "unread": 2,
-            "time": "12:30"
-        },
-        {
-            "id": 2,
-            "partner": "Марат",
-            "last_message": "Готов обменять настольную игру",
-            "unread": 0,
-            "time": "Вчера"
-        }
-    ]
+router = APIRouter(prefix="/messages", tags=["Сообщения"])
 
-@router.get("/{conversation_id}")
-async def get_messages(conversation_id: int):
-    """Получить сообщения чата"""
-    if conversation_id == 1:
-        return [
-            {
-                "id": 1,
-                "sender": "Ольга",
-                "text": "Привет! Интересуюсь вашим предложением по обмену книг.",
-                "time": "12:30",
-                "is_me": False
-            },
-            {
-                "id": 2,
-                "sender": "Я",
-                "text": "Здравствуйте! Отлично, можете прислать фото?",
-                "time": "12:32",
-                "is_me": True
-            }
-        ]
-    
-    raise HTTPException(status_code=404, detail="Чат не найден")
+
+@router.get("/conversations", summary="Получение списка всех чатов")
+async def get_all_conversations(
+) -> list[SConversationList]:
+    return await MessageService().get_conversations()
+
+
+@router.get("/conversations/{conversation_id}", summary="Получение конкретного чата")
+async def get_conversation(
+    conversation_id: int,
+) -> SConversationGet:
+    return await MessageService().get_conversation(conversation_id=conversation_id)
+
+
+@router.post("/conversations/{conversation_id}/messages", summary="Отправка сообщения")
+async def send_message(
+    message_data: SMessageAdd,
+    conversation_id: int,
+) -> dict[str, str]:
+    try:
+        await MessageService().send_message(conversation_id=conversation_id, message_data=message_data)
+    except ConversationNotFoundError:
+        raise ConversationNotFoundHTTPError
+
+    return {"status": "OK"}
+
+
+@router.get("/conversations/{conversation_id}/messages", summary="Получение сообщений чата")
+async def get_conversation_messages(
+    conversation_id: int,
+    skip: int = 0,
+    limit: int = 100
+) -> list[SMessageGet]:
+    return await MessageService().get_messages(conversation_id=conversation_id, skip=skip, limit=limit)
+
+
+@router.delete("/messages/{message_id}", summary="Удаление сообщения")
+async def delete_message(
+    message_id: int,
+) -> dict[str, str]:
+    try:
+        await MessageService().delete_message(message_id=message_id)
+    except MessageNotFoundError:
+        raise MessageNotFoundHTTPError
+    except MessageAccessDeniedError:
+        raise MessageAccessDeniedHTTPError
+
+    return {"status": "OK"}
