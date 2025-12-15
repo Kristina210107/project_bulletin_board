@@ -1,288 +1,589 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТовароОбмен — Сообщество обмена вещами</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Стили для переключения страниц */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
 
-{% block title %}ТовароОбмен — Сообщество обмена вещами{% endblock %}
+        /* Стили для авторизации */
+        .auth-page {
+            max-width: 420px;
+            margin: 36px auto;
+            padding: 18px;
+            background: var(--card);
+            border-radius: 12px;
+        }
+        .auth-page h2 {
+            color: #331B15;
+            margin-top: 0;
+        }
+        .field {
+            margin-bottom: 15px;
+        }
+        .field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
 
-{% block content %}
-<div id="app" class="app">
-  <!-- Верхняя панель с логотипом и кнопками -->
-  <header class="top-bar">
-    <div class="logo-section">
-      <svg class="logo" width="48" height="48" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="36" cy="36" r="34" fill="#F5A089" stroke="#795F58" stroke-width="2" />
-        <g fill="none" stroke="#331B15" stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
-          <path d="M22 24h28" />
-          <path d="M36 24v26" />
-        </g>
-      </svg>
-      <div class="logo-text">
-        <h1>ТовароОбмен</h1>
-        <p class="tagline">Взаимная помощь. Реальные вещи.<br>Достойные истории.</p>
-      </div>
+        /* Стили для сообщений */
+        .ms-root {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 12px;
+            padding: 18px;
+        }
+        .conversations, .thread {
+            background: var(--card);
+            padding: 12px;
+            border-radius: 12px;
+        }
+        .conv-item {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #fff;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .conv-item.active {
+            background: linear-gradient(90deg, rgba(245,160,137,0.08), #fff);
+        }
+        .msg {
+            padding: 8px;
+            border-radius: 10px;
+            margin: 6px 0;
+            max-width: 70%;
+        }
+        .msg.you {
+            background: var(--primary-bg);
+            align-self: flex-end;
+            color: var(--primary-text);
+        }
+        .msg.them {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .composer {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .composer input {
+            flex: 1;
+        }
+
+        /* Стили для страницы товара */
+        .detail-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 18px;
+            align-items: start;
+        }
+        .detail-media {
+            width: 360px;
+            height: 300px;
+            background: linear-gradient(180deg,#fbfbfb,#f2f6f2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .detail-media img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Стили для аккаунта */
+        .account-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        /* Главная страница - исправленная сетка как на картинке */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 260px;
+            gap: 18px;
+            align-items: start;
+            padding: 18px;
+        }
+
+        /* Панель справа */
+        .right-panel {
+            background: var(--panel);
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(12,18,12,0.03);
+        }
+
+        /* Карточки товаров в сетке */
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        /* Стили для запросов */
+        .requests-panel {
+            margin-bottom: 20px;
+        }
+        .request-item {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .request-item strong {
+            color: #331B15;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .request-item small {
+            color: var(--muted);
+        }
+
+        /* Истории обмена */
+        .stories-panel {
+            margin-top: 20px;
+        }
+        .story-item {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        /* Кнопки в правой панели */
+        .panel-buttons {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .panel-button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+        }
+        .panel-button.primary {
+            background: var(--primary-bg);
+            color: var(--primary-text);
+        }
+        .panel-button.secondary {
+            background: var(--secondary-bg);
+            color: var(--secondary-text);
+            border: 1px solid var(--secondary-border);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 980px) {
+            .auth-page {
+                max-width: 100%;
+                width: calc(100% - 24px);
+                margin: 16px auto;
+                padding: 14px;
+            }
+            .ms-root, .detail-layout, .account-layout, .main-layout {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            .detail-media {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                max-height: 220px;
+            }
+            .offers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+  <script src="/static/index.js"></script>
+    <!-- Главная страница -->
+    <div id="main-page" class="page active">
+        <header class="header">
+            <div class="brand">
+                <svg class="logo" width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img">
+                    <title>ТовароОбмен</title>
+                    <circle cx="36" cy="36" r="34" fill="url(#g)" stroke="#795F58" stroke-width="2.5" />
+                    <defs>
+                        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+                            <stop offset="0" stop-color="#F5A089"/>
+                            <stop offset="1" stop-color="#CCA094"/>
+                        </linearGradient>
+                    </defs>
+                    <g fill="none" stroke="#331B15" stroke-linecap="round" stroke-linejoin="round" stroke-width="6">
+                        <path d="M22 24h28" />
+                        <path d="M36 24v26" />
+                    </g>
+                </svg>
+                <div>
+                    <h1>ТовароОбмен</h1>
+                    <p class="tag">Взаимная помощь. Реальные вещи. Достойные истории.</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <input id="global-search" class="header-search" placeholder="Поиск по всему сайту..." aria-label="Поиск"/>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button onclick="showPage('main-page')" class="auth" title="Главная">Главная</button>
+                    <button onclick="showPage('messages-page')" class="auth" title="Сообщения">Сообщения</button>
+                    <div class="auth-buttons" style="display:flex;gap:8px;align-items:center">
+                        <button onclick="showPage('login-page')" class="auth">Войти</button>
+                        <button onclick="showPage('register-page')" class="auth primary">Регистрация</button>
+                    </div>
+                </div>
+
+                <button onclick="showPage('account-page')" style="text-decoration:none;color:inherit;background:none;border:none;cursor:pointer;">
+                    <div class="user" role="button" aria-label="Аккаунт">
+                        <div class="avatar" id="user-avatar">А</div>
+                        <div class="user-meta">
+                            <div id="user-name">Анна</div>
+                            <div class="score" id="user-score">Доверие: 4.4</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <!-- Левая панель -->
+            <aside class="sidebar">
+                <div class="community-panel">
+                    <h3>Комьюнити</h3>
+                    <p>2500 участников • 132 обмена на этой неделе</p>
+                    <div class="community-actions">
+                        <button id="join-btn">Присоединиться</button>
+                        <button id="how-btn">Как это работает</button>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <h4>Фильтры</h4>
+                    <input id="search" placeholder="Поиск: что нужно..."/>
+                    <select id="category">
+                        <option value="">Все категории</option>
+                        <option>Книги</option>
+                        <option>Одежда</option>
+                        <option>Техника</option>
+                        <option>Детское</option>
+                        <option>Дом</option>
+                        <option>Мебель</option>
+                        <option>Спорт</option>
+                        <option>Инструменты</option>
+                        <option>Развлечения</option>
+                        <option>Коллекции</option>
+                        <option>Хобби</option>
+                        <option>Музыка</option>
+                        <option>Другое</option>
+                    </select>
+                    <label><input type="checkbox" id="nearby" /> Только поблизости</label>
+                </div>
+
+                <div class="tips">
+                    <h4>Совет</h4>
+                    <p>Опишите, почему вещь будет полезна другому — это повышает шанс на обмен.</p>
+                </div>
+            </aside>
+
+            <!-- Центральная часть - товары -->
+            <section class="content">
+                <div class="toolbar">
+                    <h2>Предложения сообщества</h2>
+                    <div class="sort">
+                        <label>Сортировать:</label>
+                        <select id="sort">
+                            <option value="new">Сначала новые</option>
+                            <option value="match">Лучшее соответствие</option>
+                            <option value="popular">Популярные</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="list" class="offers-grid"></div>
+
+                <div id="empty" class="empty" hidden>
+                    <h3>Пока пусто</h3>
+                    <p>Будьте первым, кто предложит вещь или уточнит, что ему нужно.</p>
+                </div>
+            </section>
+
+            <!-- Правая панель как на картинке -->
+            <aside class="right-panel">
+                <div class="requests-panel">
+                    <h3>Предложенные запросы</h3>
+                    <div id="requests"></div>
+                </div>
+
+                <div class="stories-panel">
+                    <h4>Истории обмена</h4>
+                    <div id="stories"></div>
+                </div>
+
+                <div class="panel-buttons">
+                    <button id="new-offer-btn" class="panel-button primary">Предложить вещь</button>
+                    <button id="saved-btn" class="panel-button secondary">Сохранённые</button>
+                </div>
+            </aside>
+        </main>
+
+        <footer class="footer">
+            <small>Здесь люди помогают друг другу находить вещи через обмен — без давления и коммерции.</small>
+            <div class="contact-info">
+                <h5>Контакты</h5>
+                <div>✉️ <a href="mailto:hello@obmennik.local">hello@obmennik.local</a></div>
+                <div>📞 <a href="tel:+79161234567">+7 (916) 123‑45‑67</a></div>
+                <div class="socials">
+                    <a href="#" aria-label="Telegram">Telegram</a> ·
+                    <a href="#" aria-label="VK">VK</a>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Модальные окна и шаблоны -->
+        <template id="offer-template">
+            <div class="card">
+                <div class="card-media">
+                    <img class="item-img" src="" alt=""/>
+                </div>
+                <div class="card-body">
+                    <div class="card-header">
+                        <h3 class="title"></h3>
+                        <div class="badge" title="Социальная оценка">♥ <span class="likes"></span></div>
+                    </div>
+                    <p class="desc"></p>
+                    <ul class="specs"></ul>
+                    <div class="meta">
+                        <span class="category"></span>
+                        <span class="owner"></span>
+                    </div>
+                    <div class="location"></div>
+                    <div class="card-actions">
+                        <button class="swap-btn">Предложить обмен</button>
+                        <button class="save-btn">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <div id="modal-root"></div>
     </div>
-    
-    <div class="top-actions">
-      <button class="btn-offer">Предложить вещь</button>
-      <a href="/messages" class="btn-messages">Сообщения</a>
-      <button class="btn-auth">Войти</button>
-      <button class="btn-auth primary">Регистрация</button>
-      <div class="user-profile">
-        <div class="avatar">А</div>
-        <div class="user-info">
-          <div class="user-name">Анна</div>
-          <div class="user-trust">Доверие 4.8</div>
+
+    <!-- Страница товара -->
+    <div id="product-page" class="page">
+        <div style="padding:18px;">
+            <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+                <button onclick="showPage('main-page')" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;">← Вернуться</button>
+                <h2 id="p-title" style="margin:0;font-size:20px;color:#331B15"></h2>
+            </div>
+
+            <main class="detail-layout">
+                <section style="background:var(--card);padding:14px;border-radius:12px;">
+                    <div style="display:flex;gap:14px;align-items:flex-start;">
+                        <div class="detail-media">
+                            <img id="p-img" src="" alt="" />
+                        </div>
+                        <div style="flex:1;">
+                            <h3 id="p-short" style="margin-top:0;color:#331B15"></h3>
+                            <div style="color:var(--muted);margin-bottom:8px" id="p-category"></div>
+                            <div id="p-desc" style="color:var(--info-text);line-height:1.4"></div>
+                            <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+                                <div style="font-weight:700;font-size:20px;color:#331B15" id="p-price">Бесплатно</div>
+                                <button id="p-swap" class="swap-btn">Предложить обмен</button>
+                                <button id="p-contact" class="primary">Связаться с продавцом</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="margin:18px 0;border:none;border-top:1px solid rgba(0,0,0,0.04)"/>
+
+                    <div>
+                        <h4 style="margin:0 0 8px 0">Отзывы о продавце</h4>
+                        <div id="reviews" style="display:flex;flex-direction:column;gap:10px"></div>
+                    </div>
+                </section>
+
+                <aside style="background:var(--panel);padding:14px;border-radius:12px;">
+                    <h4>Данные продавца</h4>
+                    <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+                        <div style="width:56px;height:56px;border-radius:10px;background:#fff;display:grid;place-items:center;font-weight:700">П</div>
+                        <div>
+                            <div id="seller-name" style="font-weight:700"></div>
+                            <div id="seller-score" style="color:var(--muted);font-size:13px"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px">
+                        <h5 style="margin:0 0 6px 0">Параметры</h5>
+                        <div id="seller-meta" style="color:var(--muted);font-size:13px"></div>
+                    </div>
+
+                    <div style="margin-top:14px">
+                        <h5 style="margin:0 0 6px 0">Контакты</h5>
+                        <div><a id="seller-email" href="#" style="color:var(--menu-text);font-weight:600"></a></div>
+                        <div id="seller-phone" style="color:var(--muted);margin-top:6px"></div>
+                    </div>
+                </aside>
+            </main>
         </div>
-      </div>
     </div>
-  </header>
 
-  <!-- Поисковая строка -->
-  <div class="search-bar">
-    <input type="text" class="global-search" placeholder="Помех по всему сайту..." />
-  </div>
-
-  <main class="main-container">
-    <!-- Левая колонка: Комьюнити и фильтры -->
-    <aside class="left-sidebar">
-      <!-- Блок комьюнити -->
-      <section class="community-block">
-        <h3>Комьюнити</h3>
-        <div class="community-stats">
-          <span class="stat">2500 участников</span>
-          <span class="stat">•</span>
-          <span class="stat">132 обмена на этой неделе</span>
-        </div>
-        <div class="community-actions">
-          <button class="btn-join">Присоединиться</button>
-          <button class="btn-how">Как это работает</button>
-        </div>
-      </section>
-
-      <!-- Фильтры -->
-      <section class="filters-block">
-        <h4>Фильтры</h4>
-        <input type="text" class="filter-search" placeholder="Помех: что нужно..." />
-        
-        <div class="filter-categories">
-          <h5>Все категории</h5>
-          <div class="category-list">
-            <label class="category-item">
-              <input type="checkbox" />
-              <span>Книги</span>
-            </label>
-            <label class="category-item">
-              <input type="checkbox" />
-              <span>Одежда</span>
-            </label>
-            <label class="category-item">
-              <input type="checkbox" />
-              <span>Техника</span>
-            </label>
-            <label class="category-item">
-              <input type="checkbox" />
-              <span>Детское</span>
-            </label>
-            <label class="category-item">
-              <input type="checkbox" />
-              <span>Мебель</span>
-            </label>
-            <label class="category-item">
-              <input type="checkbox" />
-              <span>Дом</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="filter-nearby">
-          <label>
-            <input type="checkbox" id="nearby" />
-            <span>Только поблизости</span>
-          </label>
-        </div>
-        
-        <div class="filter-tip">
-          <h5>Совет</h5>
-          <p>Опишите, почему вещь будет полезна другому — это повышает шанс на обмен.</p>
-        </div>
-      </section>
-    </aside>
-
-    <!-- Центральная колонка: Предложения -->
-    <section class="content-main">
-      <div class="content-header">
-        <h2>Предложения сообщества</h2>
-        <div class="sort-options">
-          <select class="sort-select">
-            <option value="new">Сначала новые</option>
-            <option value="popular">Популярные</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="offers-grid" id="offers-list">
-        <!-- Карточка предложения 1 -->
-        <div class="offer-card">
-          <div class="offer-image">
-            <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=400&auto=format&fit=crop" alt="Сборник сказок" />
-          </div>
-          <div class="offer-content">
-            <h3 class="offer-title">Сборник советских сказок (книги)</h3>
-            <p class="offer-description">В отличном состоянии, 200 страниц. Ищу детскую одежду или игрушку.</p>
-            
-            <div class="offer-specs">
-              <span class="spec">200 стр.</span>
-              <span class="spec">Твёрдый переплёт</span>
-              <span class="spec">Вес 420 г</span>
-            </div>
-            
-            <div class="offer-meta">
-              <span class="category-tag">Книги</span>
-              <span class="location">Москва, м. Чистые пруды</span>
-            </div>
-            
-            <div class="offer-actions">
-              <button class="btn-exchange">Предложить обмен</button>
-              <button class="btn-save">Сохранить</button>
-            </div>
-          </div>
+    <!-- Страница сообщений -->
+    <div id="messages-page" class="page">
+        <div style="padding:12px;display:flex;justify-content:space-between;align-items:center">
+            <button onclick="showPage('main-page')" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;">← Вернуться</button>
+            <h2 style="margin:0;color:#331B15">Сообщения</h2>
+            <button onclick="showPage('account-page')" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;">Мой аккаунт</button>
         </div>
 
-        <!-- Карточка предложения 2 -->
-        <div class="offer-card">
-          <div class="offer-image">
-            <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=400&auto=format&fit=crop" alt="Детская куртка" />
-          </div>
-          <div class="offer-content">
-            <h3 class="offer-title">Детская теплая куртка (110 см)</h3>
-            <p class="offer-description">Пару раз носили, тёплая и чистая. Отдам в обмен на настольные игры.</p>
-            
-            <div class="offer-specs">
-              <span class="spec">Размер 110</span>
-              <span class="spec">Синтепон</span>
-              <span class="spec">Практически новая</span>
+        <div class="ms-root">
+            <div class="conversations" id="conversations">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <strong>Чаты</strong>
+                    <button id="new-chat" class="primary">Новый</button>
+                </div>
+                <div id="conv-list"></div>
             </div>
-            
-            <div class="offer-meta">
-              <span class="category-tag">Одежда</span>
-              <span class="location">Санкт-Петербург, Приморский р-н</span>
-            </div>
-            
-            <div class="offer-actions">
-              <button class="btn-exchange">Предложить обмен</button>
-              <button class="btn-save">Сохранить</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- Карточка предложения 3 -->
-        <div class="offer-card">
-          <div class="offer-image">
-            <img src="https://images.unsplash.com/photo-1526481280698-49b77a2b52e7?q=80&w=400&auto=format&fit=crop" alt="Светильник" />
-          </div>
-          <div class="offer-content">
-            <h3 class="offer-title">Светильник настольный — рабочий</h3>
-            <p class="offer-description">Ищем азы для ремонта: отвертки/клещи или помощь с мелким ремонтом.</p>
-            
-            <div class="offer-specs">
-              <span class="spec">LED</span>
-              <span class="spec">Регулировка яркости</span>
-              <span class="spec">Потребление 6W</span>
+            <div class="thread" id="thread">
+                <div id="thread-head" style="font-weight:700;color:#331B15;margin-bottom:8px">Выберите чат</div>
+                <div id="messages" style="display:flex;flex-direction:column;min-height:360px;gap:4px;overflow:auto;padding-bottom:8px"></div>
+                <div class="composer">
+                    <input id="msg-input" class="input" placeholder="Написать сообщение..."/>
+                    <button id="send-msg" class="primary">Отправить</button>
+                </div>
             </div>
-            
-            <div class="offer-meta">
-              <span class="category-tag">Техника</span>
-              <span class="owner">Екатерина</span>
-              <span class="location">Казань, центр</span>
-            </div>
-            
-            <div class="offer-actions">
-              <button class="btn-exchange">Предложить обмен</button>
-              <button class="btn-save">Сохранить</button>
-            </div>
-          </div>
         </div>
-
-        <!-- Еще карточки -->
-        <div class="offer-card">
-          <div class="offer-image">
-            <img src="https://images.unsplash.com/photo-1503602642458-232111445657?q=80&w=400&auto=format&fit=crop" alt="Кружки" />
-          </div>
-          <div class="offer-content">
-            <h3 class="offer-title">Набор керамических кружек</h3>
-            <p class="offer-description">6 штук, есть небольшой скол на одной.</p>
-            <div class="offer-meta">
-              <span class="category-tag">Дом</span>
-            </div>
-            <div class="offer-actions">
-              <button class="btn-exchange">Предложить обмен</button>
-              <button class="btn-save">Сохранить</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="offer-card">
-          <div class="offer-image">
-            <img src="https://images.unsplash.com/photo-1520975916232-04dfb3f2f6d9?q=80&w=400&auto=format&fit=crop" alt="Рюкзак" />
-          </div>
-          <div class="offer-content">
-            <h3 class="offer-title">Рюкзак городской, почти новый</h3>
-            <p class="offer-description">Удобные отделения, идеален для учебы или прогулок.</p>
-            <div class="offer-meta">
-              <span class="category-tag">Одежда</span>
-            </div>
-            <div class="offer-actions">
-              <button class="btn-exchange">Предложить обмен</button>
-              <button class="btn-save">Сохранить</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Правая колонка: Запросы и истории -->
-    <aside class="right-sidebar">
-      <!-- Запросы -->
-      <section class="requests-block">
-        <h3>Предложенные запросы</h3>
-        <div class="requests-list">
-          <div class="request-item">
-            <strong>Нужна помощь с ремонтом велосипеда</strong>
-            <p><small>Сергей • Взамен: инструменты</small></p>
-          </div>
-          <div class="request-item">
-            <strong>Ищу детские книги 6+</strong>
-            <p><small>Мария • Взамен: комнатные растения</small></p>
-          </div>
-          <div class="request-item">
-            <strong>Требуется временная мебель</strong>
-            <p><small>Алексей • Взамен: электроника</small></p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Истории обмена -->
-      <section class="stories-block">
-        <h4>Истории обмена</h4>
-        <div class="stories-list">
-          <div class="story-item">
-            <p>"Обменял старый фотоаппарат на набор инструментов. Обе стороны довольны!"</p>
-          </div>
-          <div class="story-item">
-            <p>"Отдал детскую одежду, получил книги. Отличная экономия для семьи!"</p>
-          </div>
-          <div class="story-item">
-            <p>"Поменяла ненужную вазу на горшок с цветком. Теперь дома уютнее."</p>
-          </div>
-        </div>
-      </section>
-    </aside>
-  </main>
-
-  <footer class="main-footer">
-    <p>Здесь люди помогают друг другу находить вещи через обмен — без давления и коммерции.</p>
-    <div class="footer-contact">
-      <div>✉️ hello@obmennik.local</div>
-      <div>📞 +7 (916) 123-45-67</div>
     </div>
-  </footer>
-</div>
-{% endblock %}
+
+    <!-- Страница входа -->
+    <div id="login-page" class="page">
+        <div class="auth-page">
+            <button onclick="showPage('main-page')" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;display:inline-block;margin-bottom:12px">← Вернуться</button>
+            <h2>Вход</h2>
+            <div class="field">
+                <label>Имя<br/><input id="login-name" class="input" placeholder="Ваше имя" /></label>
+            </div>
+            <div class="field">
+                <label>Email<br/><input id="login-email" class="input" placeholder="you@example.com" /></label>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button onclick="showPage('register-page')" style="align-self:center;color:var(--menu-text);text-decoration:none;background:none;border:none;cursor:pointer;">Нет аккаунта?</button>
+                <button id="do-login" class="primary">Войти</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Страница регистрации -->
+    <div id="register-page" class="page">
+        <div class="auth-page">
+            <button onclick="showPage('main-page')" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;display:inline-block;margin-bottom:12px">← Вернуться</button>
+            <h2>Регистрация</h2>
+            <div class="field">
+                <label>Имя<br/><input id="reg-name" class="input" placeholder="Имя пользователя" /></label>
+            </div>
+            <div class="field">
+                <label>Email<br/><input id="reg-email" class="input" placeholder="you@example.com" /></label>
+            </div>
+            <div class="field">
+                <label>Пароль<br/><input id="reg-pass" class="input" type="password" placeholder="Пароль" /></label>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button onclick="showPage('login-page')" style="align-self:center;color:var(--menu-text);text-decoration:none;background:none;border:none;cursor:pointer;">Уже есть аккаунт?</button>
+                <button id="do-register" class="primary">Создать аккаунт</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Страница аккаунта -->
+    <div id="account-page" class="page">
+        <div style="padding:18px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
+                <button onclick="showPage('main-page')" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;">← Вернуться</button>
+                <h2 style="margin:0;font-size:20px;color:#331B15">Мой аккаунт</h2>
+                <button onclick="showPage('messages-page')" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;">Перейти в сообщения</button>
+            </div>
+
+            <main class="account-layout">
+                <section style="background:var(--card);padding:14px;border-radius:12px;">
+                    <h3>Профиль</h3>
+                    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+                        <div style="width:72px;height:72px;border-radius:12px;background:#fff;display:grid;place-items:center;font-weight:700">А</div>
+                        <div>
+                            <div id="acc-name" style="font-weight:700;font-size:18px">Гость</div>
+                            <div id="acc-email" style="color:var(--muted);font-size:13px">email@example.com</div>
+                            <div id="acc-score" style="margin-top:6px;color:var(--muted)">Доверие: 0.0 • 0 сделок</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px">
+                        <h4 style="margin:0 0 8px 0">Активность</h4>
+                        <div id="acc-activity" style="display:flex;flex-direction:column;gap:8px"></div>
+                    </div>
+                </section>
+
+                <aside style="background:var(--panel);padding:14px;border-radius:12px;">
+                    <h4>Настройки</h4>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+                        <label>Имя <input id="input-name" class="input" placeholder="Ваше имя"/></label>
+                        <label>Email <input id="input-email" class="input" placeholder="email@example.com"/></label>
+                        <div style="display:flex;gap:8px">
+                            <button id="save-profile" class="primary">Сохранить</button>
+                            <button id="logout" class="save-btn">Выйти</button>
+                        </div>
+                    </div>
+                </aside>
+            </main>
+        </div>
+    </div>
+    <script>
+        // Простая функция переключения страниц
+        function showPage(pageId) {
+            // Скрыть все страницы
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // Показать выбранную страницу
+            document.getElementById(pageId).classList.add('active');
+
+            // Обновить заголовок страницы
+            const titles = {
+                'main-page': 'ТовароОбмен — Сообщество обмена вещами',
+                'product-page': 'Товар — ТовароОбмен',
+                'messages-page': 'Сообщения — ТовароОбмен',
+                'login-page': 'Вход — ТовароОбмен',
+                'register-page': 'Регистрация — ТовароОбмен',
+                'account-page': 'Аккаунт — ТовароОбмен'
+            };
+            document.title = titles[pageId] || 'ТовароОбмен';
+        }
+    </script>
+</body>
+</html>

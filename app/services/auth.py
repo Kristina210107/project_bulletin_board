@@ -64,7 +64,7 @@ class AuthService(BaseService):
         existing_user = await self.db.users.get_one_or_none(email=user_data.email)
         if existing_user:
             raise UserAlreadyExistsError
-            
+
         # Проверяем, существует ли роль
         from app.services.roles import RolesService
         role_service = RolesService(self.db)
@@ -72,13 +72,12 @@ class AuthService(BaseService):
         if not role:
             from app.exceptions.roles import RoleNotFoundError
             raise RoleNotFoundError
-            
+
         hashed_password: str = self.hash_password(user_data.password)
         new_user_data = SUserAdd(
             email=user_data.email,
             hashed_password=hashed_password,
             name=user_data.name,
-            full_name=user_data.full_name,
             role_id=1
         )
         user = await self.db.users.add(new_user_data)
@@ -89,13 +88,13 @@ class AuthService(BaseService):
         user = await self.db.users.get_one_or_none(email=user_data.email)
         if not user:
             raise UserNotFoundError
-        
+
         if not self.verify_password(user_data.password, user.hashed_password):
             raise InvalidPasswordError
-        
+
         token_data = {"user_id": user.id, "email": user.email}
         access_token = self.create_access_token(token_data)
-        
+
         return STokenResponse(
             token=access_token,
             user=SUserResponse(
@@ -110,5 +109,5 @@ class AuthService(BaseService):
         user = await self.db.users.get_one_or_none_with_role(id=user_id)
         if not user:
             raise UserNotFoundError
-        
+
         return user

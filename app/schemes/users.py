@@ -36,11 +36,13 @@ class SUserAuth(BaseModel):
 
 class SUserAddRequest(BaseModel):
     """Для регистрации (запрос от клиента)"""
+    name: str
     email: EmailStr
     password: str
-    name: str
-    full_name: Optional[str] = None
-    
+    role_id: int
+    phone_number: Optional[str] = None
+
+
 
     @field_validator("password")
     @classmethod
@@ -65,7 +67,7 @@ class SUserAdd(BaseModel):
     email: EmailStr
     hashed_password: str
     name: str
-    full_name: Optional[str] = None
+    null_name: Optional[str] = None
     role_id: int | None=1
 
 
@@ -92,7 +94,6 @@ class SUserUpdate(BaseModel):
     """Для обновления"""
     name: Optional[str] = None
     email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
     phone: Optional[str] = None
     is_verified: Optional[bool] = None
 
@@ -101,7 +102,6 @@ class SUserPatch(BaseModel):
     """Для частичного обновления"""
     name: Optional[str] = None
     email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
     phone: Optional[str] = None
     is_verified: Optional[bool] = None
 
