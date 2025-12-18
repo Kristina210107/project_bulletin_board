@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация — ТовароОбмен</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background: var(--bg);
+            color: var(--main-text);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.4;
+            font-size: 14px;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .auth-container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 24px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(121, 95, 88, 0.1);
+        }
+        
+        .auth-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .auth-header h2 {
+            color: #331B15;
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .input-group .input {
+            width: 100%;
+            padding: 14px 12px 14px 12px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: var(--secondary-bg);
+            color: var(--main-text);
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+            outline: none;
+        }
+        
+        .input-group .input:focus {
+            border-color: var(--primary-bg);
+            box-shadow: 0 0 0 3px rgba(245,160,137,0.2);
+        }
+        
+        .input-group .floating-label {
+            position: absolute;
+            left: 12px;
+            top: 14px;
+            color: var(--muted);
+            font-size: 15px;
+            font-weight: 400;
+            pointer-events: none;
+            transition: all 0.2s;
+        }
+        
+        .input-group .input:focus + .floating-label,
+        .input-group .input:not(:placeholder-shown) + .floating-label {
+            top: -10px;
+            left: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--secondary-bg);
+            padding: 0 4px;
+            color: var(--primary-bg);
+        }
+        
+        .auth-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+        
+        .auth-link {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            color: var(--primary-bg);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+            <div class="auth-header">
+                <h2 id="auth-title">Вход</h2>
+                <a href="/web/index" style="text-decoration:none;color:var(--menu-text);padding:8px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:var(--card);border:none;cursor:pointer;">← Назад</a>
+            </div>
+            
+            <!-- Форма входа -->
+            <div id="login-form">
+                <div class="input-group">
+                    <input id="login-email" class="input" placeholder=" " required />
+                    <label for="login-email" class="floating-label">Email</label>
+                </div>
+                <div class="input-group">
+                    <input id="login-pass" class="input" type="password" placeholder=" " required />
+                    <label for="login-pass" class="floating-label">Пароль</label>
+                </div>
+                <div class="auth-actions">
+                    <a href="#register" id="show-register-link" class="auth-link">Нет аккаунта?</a>
+                    <button id="do-login" class="primary">Войти</button>
+                </div>
+            </div>
+            
+            <!-- Форма регистрации -->
+            <div id="register-form" style="display: none;">
+                <div class="input-group">
+                    <input id="reg-name" class="input" placeholder=" " required />
+                    <label for="reg-name" class="floating-label">Имя</label>
+                </div>
+                <div class="input-group">
+                    <input id="reg-email" class="input" placeholder=" " required />
+                    <label for="reg-email" class="floating-label">Email</label>
+                </div>
+                <div class="input-group">
+                    <input id="reg-pass" class="input" type="password" placeholder=" " required />
+                    <label for="reg-pass" class="floating-label">Пароль</label>
+                </div>
+                <div class="auth-actions">
+                    <a href="#login" id="show-login-link" class="auth-link">Уже есть аккаунт?</a>
+                    <button id="do-register" class="primary">Создать аккаунт</button>
+                </div>
+            </div>
+        </div>
+
+    <script src="/static/auth.js"></script>
+        <script>
+            // Навигация между формами
+            document.addEventListener('DOMContentLoaded', () => {
+                const loginForm = document.getElementById('login-form');
+                const registerForm = document.getElementById('register-form');
+                const authTitle = document.getElementById('auth-title');
+                const showRegisterLink = document.getElementById('show-register-link');
+                const showLoginLink = document.getElementById('show-login-link');
+                
+                // Проверяем хэш в URL для определения начальной формы
+                if (window.location.hash === '#register') {
+                    // Показываем форму регистрации
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'block';
+                    authTitle.textContent = 'Регистрация';
+                } else {
+                    // По умолчанию показываем форму входа
+                    loginForm.style.display = 'block';
+                    registerForm.style.display = 'none';
+                    authTitle.textContent = 'Вход';
+                }
+                
+                // Обработчик для ссылки "Нет аккаунта?"
+                showRegisterLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'block';
+                    authTitle.textContent = 'Регистрация';
+                    window.location.hash = '#register';
+                });
+                
+                // Обработчик для ссылки "Уже есть аккаунт?"
+                showLoginLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    registerForm.style.display = 'none';
+                    loginForm.style.display = 'block';
+                    authTitle.textContent = 'Вход';
+                    window.location.hash = '#login';
+                });
+            });
+                    </script>
+</body>
+</html>
