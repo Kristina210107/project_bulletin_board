@@ -12,3 +12,19 @@ async def get_index(request: Request):
         "index.html",
         {"request": request}
     )
+
+
+@router.get("/web/auth", response_class=HTMLResponse)
+async def get_auth(request: Request):
+    return templates.TemplateResponse(
+        "auth.html",
+        {"request": request}
+    )
+
+
+@router.get("/web/profile", response_class=HTMLResponse)
+async def get_profile(request: Request):
+    return templates.TemplateResponse(
+        "profile.html",
+        {"request": request}
+    )

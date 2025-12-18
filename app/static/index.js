@@ -46,58 +46,58 @@ const app = (() => {
         }
     }
 
-    // === ДЕМО-ТОВАРЫ (только для отладки) ===
-    function seedDemoOffers() {
-        offers = [
-            {
-                id: 'demo-1',
-                title: 'Сборник советских сказок',
-                desc: 'В отличном состоянии, 200 страниц. Ищу детскую одежду или игрушку.',
-                category: 'Книги',
-                owner: 'Ольга',
-                likes: 18,
-                img: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800&auto=format&fit=crop',
-                specs: ['200 стр.', 'Твёрдый переплёт', 'Вес 420 г'],
-                location: 'Москва, м. Чистые пруды',
-                createdAt: new Date().toISOString(),
-                isUserAdded: false
-            },
-            {
-                id: 'demo-2',
-                title: 'Детская теплая куртка (110 см)',
-                desc: 'Пару раз носили, тёплая и чистая. Отдам в обмен на настольные игры.',
-                category: 'Одежда',
-                owner: 'Марат',
-                likes: 9,
-                img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop',
-                specs: ['Размер 110', 'Синтепон', 'Практически новая'],
-                location: 'Санкт-Петербург, Приморский р-н',
-                createdAt: new Date().toISOString(),
-                isUserAdded: false
-            }
-        ];
-    }
+    // // === ДЕМО-ТОВАРЫ (только для отладки) ===
+    // function seedDemoOffers() {
+    //     offers = [
+    //         {
+    //             id: 'demo-1',
+    //             title: 'Сборник советских сказок',
+    //             desc: 'В отличном состоянии, 200 страниц. Ищу детскую одежду или игрушку.',
+    //             category: 'Книги',
+    //             owner: 'Ольга',
+    //             likes: 18,
+    //             img: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800&auto=format&fit=crop',
+    //             specs: ['200 стр.', 'Твёрдый переплёт', 'Вес 420 г'],
+    //             location: 'Москва, м. Чистые пруды',
+    //             createdAt: new Date().toISOString(),
+    //             isUserAdded: false
+    //         },
+    //         {
+    //             id: 'demo-2',
+    //             title: 'Детская теплая куртка (110 см)',
+    //             desc: 'Пару раз носили, тёплая и чистая. Отдам в обмен на настольные игры.',
+    //             category: 'Одежда',
+    //             owner: 'Марат',
+    //             likes: 9,
+    //             img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop',
+    //             specs: ['Размер 110', 'Синтепон', 'Практически новая'],
+    //             location: 'Санкт-Петербург, Приморский р-н',
+    //             createdAt: new Date().toISOString(),
+    //             isUserAdded: false
+    //         }
+    //     ];
+    // }
 
-    // === ИНИЦИАЛИЗАЦИЯ ЗАПРОСОВ И ИСТОРИЙ (локально) ===
-    function seedRequestsAndStories() {
-        function nanoid(size = 21) {
-            const alphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
-            let id = '';
-            let i = size;
-            while (i--) id += alphabet[(Math.random() * 64) | 0];
-            return id;
-        }
+    // // === ИНИЦИАЛИЗАЦИЯ ЗАПРОСОВ И ИСТОРИЙ (локально) ===
+    // function seedRequestsAndStories() {
+    //     function nanoid(size = 21) {
+    //         const alphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+    //         let id = '';
+    //         let i = size;
+    //         while (i--) id += alphabet[(Math.random() * 64) | 0];
+    //         return id;
+    //     }
 
-        requests = [
-            { id: nanoid(), title: 'Нужен детский стульчик', owner: 'Марина', note: 'до 2 лет' },
-            { id: nanoid(), title: 'Ищу книги по программированию', owner: 'Алексей', note: 'Python, JavaScript' }
-        ];
+    //     requests = [
+    //         { id: nanoid(), title: 'Нужен детский стульчик', owner: 'Марина', note: 'до 2 лет' },
+    //         { id: nanoid(), title: 'Ищу книги по программированию', owner: 'Алексей', note: 'Python, JavaScript' }
+    //     ];
 
-        stories = [
-            { id: nanoid(), text: 'Мария обменяла книги на детскую одежду для сына.' },
-            { id: nanoid(), text: 'Сергей нашёл через обмен инструменты для ремонта.' }
-        ];
-    }
+    //     stories = [
+    //         { id: nanoid(), text: 'Мария обменяла книги на детскую одежду для сына.' },
+    //         { id: nanoid(), text: 'Сергей нашёл через обмен инструменты для ремонта.' }
+    //     ];
+    // }
 
     // === ОТПРАВКА НОВОГО ТОВАРА ===
     async function submitNewItem(formData) {
@@ -370,5 +370,236 @@ const app = (() => {
     return { init };
 })();
 
+// === АВТОРИЗАЦИЯ ===
+const auth = (() => {
+    // Базовый путь к API авторизации
+    const AUTH_BASE = '/auth';
+
+    // Функция для входа
+    async function login(email, password) {
+        try {
+            const response = await fetch(`${AUTH_BASE}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.detail || 'Ошибка входа');
+            }
+
+            // Сохраняем токен в cookie (сервер это делает)
+            showNotification('Успешный вход!');
+            
+            // Обновляем профиль в localStorage
+            const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+            profile.email = email;
+            localStorage.setItem('profile', JSON.stringify(profile));
+            
+            return data;
+        } catch (error) {
+            console.error('Ошибка входа:', error);
+            showNotification(`Ошибка: ${error.message}`);
+            throw error;
+        }
+    }
+
+    // Функция для регистрации
+    async function register(name, email, password) {
+        try {
+            const response = await fetch(`${AUTH_BASE}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.detail || 'Ошибка регистрации');
+            }
+
+            showNotification('Регистрация успешна! Теперь вы можете войти.');
+            return data;
+        } catch (error) {
+            console.error('Ошибка регистрации:', error);
+            showNotification(`Ошибка: ${error.message}`);
+            throw error;
+        }
+    }
+
+    // Функция для получения информации о текущем пользователе
+    async function getMe() {
+        try {
+            const response = await fetch(`${AUTH_BASE}/me`);
+            
+            if (!response.ok) {
+                throw new Error('Пользователь не авторизован');
+            }
+
+            const user = await response.json();
+            return user;
+        } catch (error) {
+            console.error('Ошибка получения данных пользователя:', error);
+            return null;
+        }
+    }
+
+    // Функция для выхода
+    async function logout() {
+        try {
+            const response = await fetch(`${AUTH_BASE}/logout`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка при выходе');
+            }
+
+            // Очищаем локальные данные
+            localStorage.removeItem('profile');
+            
+            showNotification('Вы вышли из системы');
+            return response.json();
+        } catch (error) {
+            console.error('Ошибка выхода:', error);
+            showNotification(`Ошибка: ${error.message}`);
+            throw error;
+        }
+    }
+
+    return {
+        login,
+        register,
+        getMe,
+        logout
+    };
+})();
+
 // Запуск приложения
-document.addEventListener('DOMContentLoaded', () => app.init());
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
+
+// Функция привязки обработчиков форм авторизации
+function bindAuthForms() {
+    // Обработчик формы входа
+    const loginBtn = document.getElementById('do-login');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-pass')?.value || document.getElementById('login-email').value.trim(); // временно для тестирования
+            
+            if (!email || !password) {
+                showNotification('Пожалуйста, заполните все поля');
+                return;
+            }
+
+            try {
+                await auth.login(email, password);
+                // После успешного входа обновляем UI
+                updateAuthUI();
+                // Переключаемся на главную страницу
+                showPage('main-page');
+            } catch (error) {
+                // Обработка ошибки происходит внутри auth.login
+            }
+        });
+    }
+
+    // Обработчик формы регистрации
+    const registerBtn = document.getElementById('do-register');
+    if (registerBtn) {
+        registerBtn.addEventListener('click', async () => {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-pass').value;
+            
+            if (!name || !email || !password) {
+                showNotification('Пожалуйста, заполните все поля');
+                return;
+            }
+
+            try {
+                await auth.register(name, email, password);
+                // После успешной регистрации переключаемся на страницу входа
+                showPage('login-page');
+            } catch (error) {
+                // Обработка ошибки происходит внутри auth.register
+            }
+        });
+    }
+
+    // Обработчик кнопки выхода
+    const logoutBtn = document.getElementById('logout');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await auth.logout();
+                // После выхода обновляем UI
+                updateAuthUI();
+                // Переключаемся на главную страницу
+                showPage('main-page');
+            } catch (error) {
+                // Обработка ошибки происходит внутри auth.logout
+            }
+        });
+    }
+}
+
+// Функция обновления UI в зависимости от статуса авторизации
+// Функция обновления UI в зависимости от статуса авторизации
+async function updateAuthUI() {
+    try {
+        const response = await fetch('/auth/me');
+        const user = await response.json();
+        
+        if (response.ok && user) {
+            // Пользователь авторизован
+            const loginContainer = document.querySelector('.login-container');
+            const profileContainer = document.querySelector('.profile-container');
+            
+            if (loginContainer) loginContainer.style.display = 'none';
+            if (profileContainer) profileContainer.style.display = 'flex';
+            
+            // Обновляем информацию о пользователе
+            const userName = document.getElementById('user-name');
+            const userScore = document.getElementById('user-score');
+            
+            if (userName) userName.textContent = user.name || 'Пользователь';
+            if (userScore) userScore.textContent = `Доверие: ${user.trust_score || '4.4'}`;
+            
+            // Также показываем профиль в хедере
+            const profileBtn = document.getElementById('profile-btn');
+            if (profileBtn) profileBtn.style.display = 'flex';
+        } else {
+            // Пользователь не авторизован
+            const loginContainer = document.querySelector('.login-container');
+            const profileContainer = document.querySelector('.profile-container');
+            
+            if (loginContainer) loginContainer.style.display = 'flex';
+            if (profileContainer) profileContainer.style.display = 'none';
+            
+            // Скрываем профиль в хедере
+            const profileBtn = document.getElementById('profile-btn');
+            if (profileBtn) profileBtn.style.display = 'none';
+        }
+    } catch (error) {
+        // В случае ошибки считаем, что пользователь не авторизован
+        const loginContainer = document.querySelector('.login-container');
+        const profileContainer = document.querySelector('.profile-container');
+        
+        if (loginContainer) loginContainer.style.display = 'flex';
+        if (profileContainer) profileContainer.style.display = 'none';
+        
+        // Скрываем профиль в хедере
+        const profileBtn = document.getElementById('profile-btn');
+        if (profileBtn) profileBtn.style.display = 'none';
+    }
+}
