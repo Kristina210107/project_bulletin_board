@@ -12,7 +12,9 @@ class ItemService(BaseService):
     async def create_item(self, item_data: SItemCreate):
         try:
             # ИСПРАВЬТЕ: create() → add() (как в категориях)
-            new_item = await self.db.items.add(item_data)  # <-- Используйте add(), а не create()
+            new_item = await self.db.items.add(
+                item_data
+            )  # <-- Используйте add(), а не create()
             await self.db.commit()
             return new_item
         except Exception as e:
@@ -30,7 +32,9 @@ class ItemService(BaseService):
         if not item:
             raise ItemNotFoundError
         # ИСПРАВЬТЕ: update() → edit() (как в категориях)
-        await self.db.items.edit(item_data, id=item_id)  # <-- Используйте edit(), а не update()
+        await self.db.items.edit(
+            item_data, id=item_id
+        )  # <-- Используйте edit(), а не update()
         await self.db.commit()
 
         # Получаем обновленный объект
@@ -43,9 +47,7 @@ class ItemService(BaseService):
             raise ItemNotFoundError
         # ИСПРАВЬТЕ: update() → edit() с exclude_unset=True
         await self.db.items.edit(
-            item_data,
-            id=item_id,
-            exclude_unset=True  # <-- Для частичного обновления
+            item_data, id=item_id, exclude_unset=True  # <-- Для частичного обновления
         )
         await self.db.commit()
         return
@@ -59,21 +61,20 @@ class ItemService(BaseService):
         # НЕ вызывайте await self.db.commit() здесь!
         return
 
-    async def get_items(self, filters: SItemFilter = None, skip: int = 0, limit: int = 100):
+    async def get_items(
+        self, filters: SItemFilter = None, skip: int = 0, limit: int = 100
+    ):
         if filters:
             # Используйте get_filtered для фильтрации
             filter_dict = filters.model_dump(exclude_unset=True)
             return await self.db.items.get_filtered(
-                limit=limit,
-                offset=skip,
-                **filter_dict
+                limit=limit, offset=skip, **filter_dict
             )
-        return await self.db.items.get_all()
+        # Используем метод с отношениями для корректного отображения на фронтенде
+        return await self.db.items.get_all_with_relations()
 
     async def get_user_items(self, user_id: int, skip: int = 0, limit: int = 100):
         # Используйте get_filtered с фильтром по user_id
         return await self.db.items.get_filtered(
-            limit=limit,
-            offset=skip,
-            user_id=user_id
+            limit=limit, offset=skip, user_id=user_id
         )

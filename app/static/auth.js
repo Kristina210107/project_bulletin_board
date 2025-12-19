@@ -15,19 +15,19 @@ const auth = (() => {
             });
 
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.detail || 'Ошибка входа');
             }
 
             // Сохраняем токен в cookie (сервер это делает)
             showNotification('Успешный вход!');
-            
+
             // Обновляем профиль в localStorage
             const profile = JSON.parse(localStorage.getItem('profile') || '{}');
             profile.email = email;
             localStorage.setItem('profile', JSON.stringify(profile));
-            
+
             return data;
         } catch (error) {
             console.error('Ошибка входа:', error);
@@ -48,7 +48,7 @@ const auth = (() => {
             });
 
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.detail || 'Ошибка регистрации');
             }
@@ -66,7 +66,7 @@ const auth = (() => {
     async function getMe() {
         try {
             const response = await fetch(`${AUTH_BASE}/me`);
-            
+
             if (!response.ok) {
                 throw new Error('Пользователь не авторизован');
             }
@@ -92,7 +92,7 @@ const auth = (() => {
 
             // Очищаем локальные данные
             localStorage.removeItem('profile');
-            
+
             showNotification('Вы вышли из системы');
             return response.json();
         } catch (error) {
@@ -118,7 +118,7 @@ function bindAuthForms() {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-pass')?.value;
-            
+
             if (!email || !password) {
                 showNotification('Пожалуйста, заполните все поля');
                 return;
@@ -143,7 +143,7 @@ function bindAuthForms() {
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-pass').value;
-            
+
             if (!name || !email || !password) {
                 showNotification('Пожалуйста, заполните все поля');
                 return;
@@ -182,22 +182,22 @@ async function updateAuthUI() {
     try {
         const response = await fetch('/auth/me');
         const user = await response.json();
-        
+
         if (response.ok && user) {
             // Пользователь авторизован
             const loginContainer = document.querySelector('.login-container');
             const profileContainer = document.querySelector('.profile-container');
-            
+
             if (loginContainer) loginContainer.style.display = 'none';
             if (profileContainer) profileContainer.style.display = 'flex';
-            
+
             // Обновляем информацию о пользователе
             const userName = document.getElementById('user-name');
             const userScore = document.getElementById('user-score');
-            
+
             if (userName) userName.textContent = user.name || 'Пользователь';
             if (userScore) userScore.textContent = `Доверие: ${user.trust_score || '4.4'}`;
-            
+
             // Также показываем профиль в хедере
             const profileBtn = document.getElementById('profile-btn');
             if (profileBtn) profileBtn.style.display = 'flex';
@@ -205,10 +205,10 @@ async function updateAuthUI() {
             // Пользователь не авторизован
             const loginContainer = document.querySelector('.login-container');
             const profileContainer = document.querySelector('.profile-container');
-            
+
             if (loginContainer) loginContainer.style.display = 'flex';
             if (profileContainer) profileContainer.style.display = 'none';
-            
+
             // Скрываем профиль в хедере
             const profileBtn = document.getElementById('profile-btn');
             if (profileBtn) profileBtn.style.display = 'none';
@@ -217,10 +217,10 @@ async function updateAuthUI() {
         // В случае ошибки считаем, что пользователь не авторизован
         const loginContainer = document.querySelector('.login-container');
         const profileContainer = document.querySelector('.profile-container');
-        
+
         if (loginContainer) loginContainer.style.display = 'flex';
         if (profileContainer) profileContainer.style.display = 'none';
-        
+
         // Скрываем профиль в хедере
         const profileBtn = document.getElementById('profile-btn');
         if (profileBtn) profileBtn.style.display = 'none';
@@ -249,7 +249,8 @@ function showNotification(text) {
 document.addEventListener('DOMContentLoaded', async () => {
     // Проверяем статус авторизации при загрузке страницы
     await updateAuthUI();
-    
+
     // Привязываем обработчики форм авторизации
     bindAuthForms();
-});
+}
+);

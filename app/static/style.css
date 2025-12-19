@@ -398,7 +398,69 @@ body {
 }
 
 /* Стили для сетки товаров уже добавлены в HTML */
+/* Карточки товаров в сетке - БАЗОВЫЙ ВАРИАНТ */
+.offers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+}
 
+/* Минимальные стили для карточки */
+.offers-grid .card {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* Заголовок товара */
+.offers-grid .title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #331B15;
+    margin: 0 0 8px 0;
+}
+
+/* Описание */
+.offers-grid .desc {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0 0 12px 0;
+    flex-grow: 1;
+}
+
+/* Кнопки */
+.offers-grid .card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.offers-grid .swap-btn,
+.offers-grid .save-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.offers-grid .swap-btn {
+    background: var(--primary-bg);
+    color: var(--primary-text);
+}
+
+.offers-grid .save-btn {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+}
 /* Правая панель */
 .right-panel {
     background: var(--panel);

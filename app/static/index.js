@@ -16,32 +16,190 @@ const app = (() => {
     const storiesEl = document.getElementById('stories');
     const offerTpl = document.getElementById('offer-template');
 
-    // === ЗАГРУЗКА ТОВАРОВ С СЕРВЕРА ===
     async function fetchOffers() {
         try {
-            const res = await fetch(API_BASE);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
+            // 1. Загружаем товары
+            const itemsRes = await fetch(API_BASE);
+            if (!itemsRes.ok) throw new Error(`Ошибка загрузки товаров: HTTP ${itemsRes.status}`);
+            const items = await itemsRes.json();
 
-            offers = data.map(item => ({
-                id: item.id,
-                title: item.title,
-                desc: item.description || '',
-                category: item.category?.name || item.category_id?.toString() || 'Другое',
-                owner: item.owner?.name || 'Аноним',
-                likes: item.likes || 0,
-                img: item.image_url || 'https://images.unsplash.com/photo-1507699622108-4be3abd695ad?q=80&w=800&auto=format&fit=crop',
-                specs: Array.isArray(item.specs) ? item.specs : (item.specs ? [item.specs] : []),
-                location: item.location?.name || 'Не указано',
-                createdAt: item.created_at || new Date().toISOString(),
-                isUserAdded: false
-            }));
+    // 2. Загружаем пользователей - УЛУЧШЕННАЯ ОТЛАДКА
+let users = new Map();
+try {
+    console.log('🔄 ========== НАЧАЛО ЗАГРУЗКИ ПОЛЬЗОВАТЕЛЕЙ ==========');
+    console.log('🔍 Делаю запрос к /users...');
+
+    // Засекаем время
+    const startTime = performance.now();
+
+    // Делаем запрос с таймаутом
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const usersRes = await fetch('/users', {
+        signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    const endTime = performance.now();
+
+    console.log(`⏱️ Время ответа: ${Math.round(endTime - startTime)}ms`);
+    console.log(`📊 HTTP статус: ${usersRes.status} (${usersRes.statusText})`);
+    console.log(`🔗 Полный URL: ${usersRes.url}`);
+    console.log(`✅ Успешен ли запрос: ${usersRes.ok}`);
+
+    // Показываем заголовки ответа
+    console.log('📋 Заголовки ответа:');
+    usersRes.headers.forEach((value, key) => {
+        console.log(`  ${key}: ${value}`);
+    });
+
+    if (usersRes.ok) {
+        console.log('🎉 Запрос успешен! Читаю JSON...');
+        const usersData = await usersRes.json();
+        console.log(`✅ Получено пользователей: ${usersData.length}`);
+        console.log('📦 Пример первого пользователя:', usersData[0]);
+
+        usersData.forEach(user => {
+            users.set(user.id, user);
+        });
+
+        console.log(`👤 Загружено в Map: ${users.size} пользователей`);
+    } else {
+        console.warn('⚠️ ⚠️ ⚠️ ВНИМАНИЕ: Запрос НЕ успешен!');
+        console.warn(`Код ошибки: ${usersRes.status} ${usersRes.statusText}`);
+
+        // Пробуем прочитать ошибку разными способами
+        try {
+            // Сначала как текст
+            const errorText = await usersRes.text();
+            console.warn('📝 Текст ответа (первые 500 символов):', errorText.substring(0, 500));
+
+            // Пробуем распарсить как JSON
+            if (errorText.trim().startsWith('{') || errorText.trim().startsWith('[')) {
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    console.warn('📋 JSON ошибки:', errorJson);
+                } catch (jsonError) {
+                    console.warn('❌ Не удалось распарсить как JSON');
+                }
+            }
+        } catch (readError) {
+            console.warn('❌ Не удалось прочитать тело ответа:', readError.message);
+        }
+
+        // Проверяем CORS
+        if (usersRes.status === 0) {
+            console.warn('🔒 Возможная проблема CORS или сетевой сбой');
+        }
+    }
+
+    console.log('✅ ========== КОНЕЦ ЗАГРУЗКИ ПОЛЬЗОВАТЕЛЕЙ ==========');
+
+} catch (e) {
+    console.error('💥 КРИТИЧЕСКАЯ ОШИБКА при загрузке пользователей:');
+    console.error('Название ошибки:', e.name);
+    console.error('Сообщение:', e.message);
+    console.error('Тип:', typeof e);
+
+    if (e.name === 'AbortError') {
+        console.error('⏰ Таймаут запроса (больше 5 секунд)');
+    }
+
+    if (e.name === 'TypeError' && e.message.includes('Failed to fetch')) {
+        console.error('🌐 Проблема с сетью или CORS');
+    }
+
+    console.error('Полный стек:', e.stack);
+}
+
+            // 3. Загружаем категории
+            let categories = new Map();
+            try {
+                const categoriesRes = await fetch('/categories'); // Ваш endpoint для категорий
+                if (categoriesRes.ok) {
+                    const categoriesData = await categoriesRes.json();
+                    categoriesData.forEach(category => {
+                        categories.set(category.id, category);
+                    });
+                    console.log(`📂 Загружено ${categories.size} категорий`);
+                } else {
+                    console.warn('⚠️ Не удалось загрузить категории');
+                }
+            } catch (e) {
+                console.warn('⚠️ Ошибка загрузки категорий:', e.message);
+            }
+
+            // 4. Загружаем локации (если нужно)
+            let locations = new Map();
+            try {
+                const locationsRes = await fetch('/locations'); // Ваш endpoint для локаций
+                if (locationsRes.ok) {
+                    const locationsData = await locationsRes.json();
+                    locationsData.forEach(location => {
+                        locations.set(location.id, location);
+                    });
+                    console.log(`📍 Загружено ${locations.size} локаций`);
+                } else {
+                    console.warn('⚠️ Не удалось загрузить локации');
+                }
+            } catch (e) {
+                console.warn('⚠️ Ошибка загрузки локаций:', e.message);
+            }
+
+            // 5. Преобразуем товары
+            offers = items.map(item => {
+                // Получаем пользователя
+                const user = users.get(item.user_id);
+                const ownerName = user ?
+                    `${user.name || ''}${user.surname ? ' ' + user.surname : ''}`.trim() :
+                    `Пользователь #${item.user_id}`;
+
+                // Получаем категорию
+                const category = categories.get(item.category_id);
+                const categoryName = category ?
+                    category.name || category.title || `Категория ${item.category_id}` :
+                    `Категория ${item.category_id}`;
+
+                // Получаем локацию
+                const location = locations.get(item.location_id);
+                const locationName = location ?
+                    location.name || location.city || `Локация ${item.location_id}` :
+                    `Локация #${item.location_id}`;
+
+                return {
+                    id: item.id,
+                    title: item.title || 'Без названия',
+                    desc: item.description || '',
+                    category: categoryName,
+                    owner: ownerName,
+                    likes: item.likes || 0,
+                    condition: item.condition || 'Не указано',
+                    location: locationName,
+                    createdAt: item.created_at || new Date().toISOString(),
+                    isUserAdded: false,
+
+                    // Сохраняем ID для будущих запросов
+                    userId: item.user_id,
+                    locationId: item.location_id,
+                    categoryId: item.category_id
+                };
+            });
+
+            // 6. Отладка
+            if (offers.length > 0) {
+                console.log('✅ ПЕРВЫЙ ТОВАР ПОСЛЕ ОБРАБОТКИ:');
+                console.log('  Название:', offers[0].title);
+                console.log('  Владелец:', offers[0].owner);
+                console.log('  Категория:', offers[0].category);
+                console.log('  Локация:', offers[0].location);
+            }
 
             renderOffers();
         } catch (e) {
             console.error('Ошибка загрузки товаров с сервера:', e);
             showNotification('Сервер недоступен. Загружаем демо-данные...');
-            seedDemoOffers(); // Fallback
+            seedDemoOffers();
             renderOffers();
         }
     }
@@ -78,26 +236,26 @@ const app = (() => {
     //     ];
     // }
 
-    // // === ИНИЦИАЛИЗАЦИЯ ЗАПРОСОВ И ИСТОРИЙ (локально) ===
-    // function seedRequestsAndStories() {
-    //     function nanoid(size = 21) {
-    //         const alphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
-    //         let id = '';
-    //         let i = size;
-    //         while (i--) id += alphabet[(Math.random() * 64) | 0];
-    //         return id;
-    //     }
+     // === ИНИЦИАЛИЗАЦИЯ ЗАПРОСОВ И ИСТОРИЙ (локально) ===
+     function seedRequestsAndStories() {
+        function nanoid(size = 21) {
+            const alphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+             let id = '';
+             let i = size;
+            while (i--) id += alphabet[(Math.random() * 64) | 0];
+             return id;
+         }
 
-    //     requests = [
-    //         { id: nanoid(), title: 'Нужен детский стульчик', owner: 'Марина', note: 'до 2 лет' },
-    //         { id: nanoid(), title: 'Ищу книги по программированию', owner: 'Алексей', note: 'Python, JavaScript' }
-    //     ];
+         requests = [
+             { id: nanoid(), title: 'Нужен детский стульчик', owner: 'Марина', note: 'до 2 лет' },
+             { id: nanoid(), title: 'Ищу книги по программированию', owner: 'Алексей', note: 'Python, JavaScript' }
+         ];
 
-    //     stories = [
-    //         { id: nanoid(), text: 'Мария обменяла книги на детскую одежду для сына.' },
-    //         { id: nanoid(), text: 'Сергей нашёл через обмен инструменты для ремонта.' }
-    //     ];
-    // }
+         stories = [
+            { id: nanoid(), text: 'Мария обменяла книги на детскую одежду для сына.' },
+             { id: nanoid(), text: 'Сергей нашёл через обмен инструменты для ремонта.' }
+        ];
+     }
 
     // === ОТПРАВКА НОВОГО ТОВАРА ===
     async function submitNewItem(formData) {
@@ -122,10 +280,30 @@ const app = (() => {
             <div class="modal" role="dialog" aria-modal="true" style="max-width: 600px;">
                 <h3 style="color: #331B15;">➕ Добавить новый товар</h3>
                 <p style="color: var(--muted); margin-bottom: 20px;">Заполните информацию о товаре</p>
+
+                <!-- ТАК ДОЛЖНО БЫТЬ ПО ВАШЕЙ БД -->
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Название товара *</label>
                     <input class="input" id="add-title" placeholder="Например: Книга 'Мастер и Маргарита'" />
                 </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Описание товара *</label>
+                    <textarea class="input" id="add-desc" placeholder="Опишите состояние товара, что вы хотите получить взамен..." rows="4"></textarea>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Состояние товара *</label>
+                    <select class="input" id="add-condition">
+                        <option value="">Выберите состояние</option>
+                        <option value="new">Новое</option>
+                        <option value="excellent">Отличное</option>
+                        <option value="good">Хорошее</option>
+                        <option value="satisfactory">Удовлетворительное</option>
+                        <option value="needs_repair">Требует ремонта</option>
+                    </select>
+                </div>
+
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Категория *</label>
                     <select class="input" id="add-category">
@@ -143,65 +321,85 @@ const app = (() => {
                         <option value="11">Другое</option>
                     </select>
                 </div>
+
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Описание товара *</label>
-                    <textarea class="input" id="add-desc" placeholder="Опишите состояние товара, что вы хотите получить взамен..." rows="4"></textarea>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Локация *</label>
+                    <select class="input" id="add-location">
+                        <option value="">Выберите локацию</option>
+                        <option value="1">Москва</option>
+                        <option value="2">Санкт-Петербург</option>
+                        <option value="3">Новосибирск</option>
+                        <option value="4">Екатеринбург</option>
+                        <option value="5">Казань</option>
+                    </select>
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Местоположение</label>
-                    <input class="input" id="add-location" placeholder="Город, район или метро" />
-                </div>
+
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: 500; color: #331B15;">Характеристики (через запятую)</label>
                     <input class="input" id="add-specs" placeholder="Например: 200 стр., твердый переплет, отличное состояние" />
                 </div>
+
+                <!-- ПОЛЕ user_id СКРЫТОЕ (пока используем ID 1) -->
+                <input type="hidden" id="add-user-id" value="1" />
+
                 <div class="modal-actions" style="margin-top: 30px;">
                     <button id="cancel-add" class="save-btn" style="margin-right: 10px;">Отмена</button>
                     <button id="submit-add" class="primary">Добавить товар</button>
                 </div>
             </div>
         `;
+
         root.appendChild(backdrop);
+
         function close() { backdrop.remove(); }
         backdrop.querySelector('#cancel-add').addEventListener('click', close);
         backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
         backdrop.querySelector('#submit-add').addEventListener('click', async () => {
+            // СБОР ДАННЫХ С ФОРМЫ
             const title = backdrop.querySelector('#add-title').value.trim();
+            const description = backdrop.querySelector('#add-desc').value.trim();
+            const condition = backdrop.querySelector('#add-condition').value;
             const category_id = backdrop.querySelector('#add-category').value;
-            const desc = backdrop.querySelector('#add-desc').value.trim();
-            const location = backdrop.querySelector('#add-location').value.trim();
+            const location_id = backdrop.querySelector('#add-location').value;
+            const user_id = backdrop.querySelector('#add-user-id').value;
             const specsInput = backdrop.querySelector('#add-specs').value.trim();
 
-            if (!title || !category_id || !desc) {
-                showNotification('Заполните все обязательные поля');
+            // ВАЛИДАЦИЯ ПО ВАШЕЙ БД
+            if (!title || !description || !condition || !category_id || !location_id) {
+                showNotification('Заполните все обязательные поля (отмечены *)');
                 return;
             }
 
-            const specs = specsInput ? specsInput.split(',').map(s => s.trim()).filter(s => s) : [];
+            // ПРЕОБРАЗОВАНИЕ ХАРАКТЕРИСТИК
+            const specs = specsInput ?
+                specsInput.split(',').map(s => s.trim()).filter(s => s) :
+                [];
 
+            // ФОРМИРОВАНИЕ ОБЪЕКТА ПО ВАШЕЙ БД
             const newOfferData = {
-                title,
-                description: desc,
-                category_id: parseInt(category_id),
-                location_id: 1, // временно
-                image_url: '',
-                specs
+                title: title,                    // str - ОБЯЗАТЕЛЬНО
+                description: description,        // str - ОБЯЗАТЕЛЬНО
+                condition: condition,            // str - ОБЯЗАТЕЛЬНО
+                user_id: parseInt(user_id),      // int - ОБЯЗАТЕЛЬНО (пока 1)
+                category_id: parseInt(category_id), // int - ОБЯЗАТЕЛЬНО
+                location_id: parseInt(location_id), // int - ОБЯЗАТЕЛЬНО
             };
+
+            console.log('Отправляемые данные:', newOfferData); // для отладки
 
             try {
                 await submitNewItem(newOfferData);
                 showNotification('Товар успешно добавлен!');
                 close();
-                await fetchOffers();
+                await fetchOffers(); // Обновляем список товаров
             } catch (e) {
-                console.error(e);
+                console.error('Ошибка добавления товара:', e);
                 showNotification('Ошибка: ' + e.message);
             }
         });
     }
 
-    // === РЕНДЕР, ПОИСК, УВЕДОМЛЕНИЯ и др. ===
     function renderOffers(list = offers) {
         if (!listEl) return;
         listEl.innerHTML = '';
@@ -211,10 +409,11 @@ const app = (() => {
         }
         emptyEl.hidden = true;
         const displayList = list.slice(0, 30);
+
         displayList.forEach(o => {
             const node = offerTpl.content.cloneNode(true);
             const card = node.querySelector('.card');
-            const img = node.querySelector('.item-img');
+
             const title = node.querySelector('.title');
             const desc = node.querySelector('.desc');
             const specsEl = node.querySelector('.specs');
@@ -242,11 +441,16 @@ const app = (() => {
 
             locationEl.textContent = o.location ? `Местоположение: ${o.location}` : '';
 
-            img.src = o.img;
-            img.alt = o.title;
+            // === ДОБАВЬТЕ ЭТУ СТРОКУ ЕСЛИ УБРАЛИ КАРТИНКИ ===
+            // Если вы убрали картинки - удалите или закомментируйте эти строки:
+            // img.src = o.img;
+            // img.alt = o.title;
 
+            // === ОБРАБОТЧИК КЛИКА НА КАРТОЧКУ (у вас уже есть, проверьте) ===
             card.dataset.id = o.id;
             card.style.cursor = 'pointer';
+
+            // Этот обработчик уже есть в вашем коде - ОСТАВЬТЕ ЕГО!
             card.addEventListener('click', (e) => {
                 if (e.target.closest('button')) return;
                 openProductDetail(o);
@@ -256,6 +460,7 @@ const app = (() => {
                 e.stopPropagation();
                 openExchangeModal(o);
             });
+
             saveBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleSave(o, card);
@@ -263,7 +468,9 @@ const app = (() => {
 
             listEl.appendChild(node);
         });
+
         updateItemsCounter(list.length);
+
         if (list.length > 30) {
             const moreMsg = document.createElement('div');
             moreMsg.className = 'more-message';
@@ -272,7 +479,6 @@ const app = (() => {
             listEl.appendChild(moreMsg);
         }
     }
-
     function updateItemsCounter(count) {
         let counterEl = document.getElementById('items-counter');
         if (!counterEl) {
@@ -349,8 +555,10 @@ const app = (() => {
 
     // === ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ ===
     async function init() {
-        console.log('Инициализация приложения...');
-        seedRequestsAndStories();
+        console.log("✅ Функция init() запущена"); // ← добавьте
+    console.log("seedRequestsAndStories существует?", typeof seedRequestsAndStories); // ← добавьте
+        console.log("Инициализация приложения...");
+        seedRequestsAndStories(); // ← исправлено
         await fetchOffers();
         bind();
         renderRequests();
@@ -358,248 +566,92 @@ const app = (() => {
 
         // Загрузка профиля (локально)
         const profile = JSON.parse(localStorage.getItem('profile') || '{}');
-        if (profile.name) {
-            document.getElementById('user-name')?.textContent = profile.name;
-            document.getElementById('user-score')?.textContent = `Доверие: ${profile.score || '4.4'}`;
-            document.getElementById('acc-name')?.textContent = profile.name;
-            document.getElementById('acc-email')?.textContent = profile.email || 'email@example.com';
-            document.getElementById('acc-score')?.textContent = `Доверие: ${profile.score || '4.4'} • ${profile.deals || 0} сделок`;
-        }
-    }
+if (profile.name) {
+    // Обновляем данные в шапке
+    const userNameEl = document.getElementById('user-name');
+    const userScoreEl = document.getElementById('user-score');
 
+    if (userNameEl) userNameEl.textContent = profile.name;
+    if (userScoreEl) userScoreEl.textContent = `Доверие: ${profile.score || '4.4'}`;
+
+    // Показываем кнопку профиля
+    const profileBtn = document.getElementById('profile-btn');
+    if (profileBtn) profileBtn.style.display = 'flex';
+
+    // Скрываем кнопку входа
+    const loginContainer = document.querySelector('.login-container');
+    if (loginContainer) loginContainer.style.display = 'none';
+} else {
+    // Если нет профиля, показываем кнопку входа
+    const loginContainer = document.querySelector('.login-container');
+    if (loginContainer) loginContainer.style.display = 'flex';
+}
+    }
     return { init };
 })();
+// === АВТОМАТИЧЕСКИЙ ЗАПУСК ===
+(function() {
+    console.log('🔄 Проверяю доступность модуля...');
 
-// === АВТОРИЗАЦИЯ ===
-const auth = (() => {
-    // Базовый путь к API авторизации
-    const AUTH_BASE = '/auth';
-
-    // Функция для входа
-    async function login(email, password) {
-        try {
-            const response = await fetch(`${AUTH_BASE}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.detail || 'Ошибка входа');
-            }
-
-            // Сохраняем токен в cookie (сервер это делает)
-            showNotification('Успешный вход!');
-            
-            // Обновляем профиль в localStorage
-            const profile = JSON.parse(localStorage.getItem('profile') || '{}');
-            profile.email = email;
-            localStorage.setItem('profile', JSON.stringify(profile));
-            
-            return data;
-        } catch (error) {
-            console.error('Ошибка входа:', error);
-            showNotification(`Ошибка: ${error.message}`);
-            throw error;
+    // Функция для запуска
+    function runApp() {
+        // Если app существует локально (внутри модуля)
+        if (typeof init === 'function') {
+            console.log('✅ Найдена локальная функция init, запускаю...');
+            init().catch(console.error);
+        }
+        // Если app существует глобально
+        else if (window.app && typeof window.app.init === 'function') {
+            console.log('✅ Найдена window.app.init, запускаю...');
+            window.app.init().catch(console.error);
+        }
+        // Если ничего не найдено
+        else {
+            console.error('❌ Не удалось найти функцию инициализации');
+            console.log('Доступные глобальные переменные:', Object.keys(window).filter(k => !k.startsWith('_')));
         }
     }
 
-    // Функция для регистрации
-    async function register(name, email, password) {
-        try {
-            const response = await fetch(`${AUTH_BASE}/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, email, password })
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.detail || 'Ошибка регистрации');
-            }
-
-            showNotification('Регистрация успешна! Теперь вы можете войти.');
-            return data;
-        } catch (error) {
-            console.error('Ошибка регистрации:', error);
-            showNotification(`Ошибка: ${error.message}`);
-            throw error;
-        }
+    // Запускаем при загрузке DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runApp);
+    } else {
+        runApp();
     }
-
-    // Функция для получения информации о текущем пользователе
-    async function getMe() {
-        try {
-            const response = await fetch(`${AUTH_BASE}/me`);
-            
-            if (!response.ok) {
-                throw new Error('Пользователь не авторизован');
-            }
-
-            const user = await response.json();
-            return user;
-        } catch (error) {
-            console.error('Ошибка получения данных пользователя:', error);
-            return null;
-        }
-    }
-
-    // Функция для выхода
-    async function logout() {
-        try {
-            const response = await fetch(`${AUTH_BASE}/logout`, {
-                method: 'POST'
-            });
-
-            if (!response.ok) {
-                throw new Error('Ошибка при выходе');
-            }
-
-            // Очищаем локальные данные
-            localStorage.removeItem('profile');
-            
-            showNotification('Вы вышли из системы');
-            return response.json();
-        } catch (error) {
-            console.error('Ошибка выхода:', error);
-            showNotification(`Ошибка: ${error.message}`);
-            throw error;
-        }
-    }
-
-    return {
-        login,
-        register,
-        getMe,
-        logout
-    };
 })();
+// === ГЛОБАЛЬНЫЙ ЭКСПОРТ ===
+// Этот код должен быть ПОСЛЕДНИМ в файле
+console.log('📦 Экспортирую модуль в window.app...');
+window.app = app;
 
-// Запуск приложения
-document.addEventListener('DOMContentLoaded', () => {
-    app.init();
-});
-
-// Функция привязки обработчиков форм авторизации
-function bindAuthForms() {
-    // Обработчик формы входа
-    const loginBtn = document.getElementById('do-login');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-pass')?.value || document.getElementById('login-email').value.trim(); // временно для тестирования
-            
-            if (!email || !password) {
-                showNotification('Пожалуйста, заполните все поля');
-                return;
-            }
-
-            try {
-                await auth.login(email, password);
-                // После успешного входа обновляем UI
-                updateAuthUI();
-                // Переключаемся на главную страницу
-                showPage('main-page');
-            } catch (error) {
-                // Обработка ошибки происходит внутри auth.login
-            }
-        });
-    }
-
-    // Обработчик формы регистрации
-    const registerBtn = document.getElementById('do-register');
-    if (registerBtn) {
-        registerBtn.addEventListener('click', async () => {
-            const name = document.getElementById('reg-name').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-pass').value;
-            
-            if (!name || !email || !password) {
-                showNotification('Пожалуйста, заполните все поля');
-                return;
-            }
-
-            try {
-                await auth.register(name, email, password);
-                // После успешной регистрации переключаемся на страницу входа
-                showPage('login-page');
-            } catch (error) {
-                // Обработка ошибки происходит внутри auth.register
-            }
-        });
-    }
-
-    // Обработчик кнопки выхода
-    const logoutBtn = document.getElementById('logout');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await auth.logout();
-                // После выхода обновляем UI
-                updateAuthUI();
-                // Переключаемся на главную страницу
-                showPage('main-page');
-            } catch (error) {
-                // Обработка ошибки происходит внутри auth.logout
-            }
-        });
+// Автоматический запуск
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 DOM загружен, запускаю приложение...');
+        if (window.app && window.app.init) {
+            window.app.init().catch(err => console.error('Ошибка запуска:', err));
+        }
+    });
+} else {
+    console.log('📄 DOM уже загружен, запускаю сразу...');
+    if (window.app && window.app.init) {
+        window.app.init().catch(err => console.error('Ошибка запуска:', err));
     }
 }
+// === ФУНКЦИЯ ОТКРЫТИЯ СТРАНИЦЫ ТОВАРА ===
+function openProductDetail(product) {
+    console.log('📖 Открываю товар:', product);
 
-// Функция обновления UI в зависимости от статуса авторизации
-// Функция обновления UI в зависимости от статуса авторизации
-async function updateAuthUI() {
-    try {
-        const response = await fetch('/auth/me');
-        const user = await response.json();
-        
-        if (response.ok && user) {
-            // Пользователь авторизован
-            const loginContainer = document.querySelector('.login-container');
-            const profileContainer = document.querySelector('.profile-container');
-            
-            if (loginContainer) loginContainer.style.display = 'none';
-            if (profileContainer) profileContainer.style.display = 'flex';
-            
-            // Обновляем информацию о пользователе
-            const userName = document.getElementById('user-name');
-            const userScore = document.getElementById('user-score');
-            
-            if (userName) userName.textContent = user.name || 'Пользователь';
-            if (userScore) userScore.textContent = `Доверие: ${user.trust_score || '4.4'}`;
-            
-            // Также показываем профиль в хедере
-            const profileBtn = document.getElementById('profile-btn');
-            if (profileBtn) profileBtn.style.display = 'flex';
-        } else {
-            // Пользователь не авторизован
-            const loginContainer = document.querySelector('.login-container');
-            const profileContainer = document.querySelector('.profile-container');
-            
-            if (loginContainer) loginContainer.style.display = 'flex';
-            if (profileContainer) profileContainer.style.display = 'none';
-            
-            // Скрываем профиль в хедере
-            const profileBtn = document.getElementById('profile-btn');
-            if (profileBtn) profileBtn.style.display = 'none';
-        }
-    } catch (error) {
-        // В случае ошибки считаем, что пользователь не авторизован
-        const loginContainer = document.querySelector('.login-container');
-        const profileContainer = document.querySelector('.profile-container');
-        
-        if (loginContainer) loginContainer.style.display = 'flex';
-        if (profileContainer) profileContainer.style.display = 'none';
-        
-        // Скрываем профиль в хедере
-        const profileBtn = document.getElementById('profile-btn');
-        if (profileBtn) profileBtn.style.display = 'none';
-    }
+    // 1. Сохраняем товар для использования на странице товара
+    localStorage.setItem('currentProduct', JSON.stringify(product));
+
+    // 2. Показываем страницу товара
+    // Если у вас есть система страниц:
+    showPage('product-page');
+
+    // ИЛИ если у вас одностраничное приложение:
+    // window.location.href = `/product.html?id=${product.id}`;
+
+    // 3. Заполняем данные на странице товара (если она уже загружена)
+    fillProductPage(product);
 }
