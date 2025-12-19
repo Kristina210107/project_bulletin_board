@@ -36,7 +36,7 @@ try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const usersRes = await fetch('/users', {
+    const usersRes = await fetch('/admin/users', {
         signal: controller.signal
     });
 
